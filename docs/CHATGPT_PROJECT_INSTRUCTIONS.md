@@ -67,6 +67,31 @@ Before adding/configuring a headphone:
 
 The converter independently enforces this policy by checking logical-product coverage and overlapping routes on every build.
 
+## UAPP-visible preset naming rule
+
+UAPP's preset picker does not show the folder an XML came from. Every generated preset must therefore identify its headphone/model in the embedded preset name.
+
+The standard format is:
+
+`Model [Variant] - Creator - Details`
+
+Examples:
+
+- `EW300 Gold - AutoEQ - Fahryst`
+- `EW300 Silver - AutoEQ - Fahryst`
+- `EW300 DSP - AutoEQ - Jaytiss`
+- `EW300 - AutoEQ - Kazi`
+- `Edition XS - AutoEQ - Rtings`
+- `HD650 - oratory1990 - Harman Target`
+
+The model/variant prefix is derived automatically from `output_path`. Drop the manufacturer component and keep the remaining model/variant components. For example, `SIMGOT/EW300/Gold` becomes `EW300 Gold`.
+
+For display only, the converter may remove a leading `Measured by ` from OPRA details and a trailing parenthetical variant when it simply repeats the configured variant. Never change the original OPRA `author`, `details`, source attribution, or EQ values in the manifest.
+
+The XML filename and embedded ToneBoosters `PresetInfo Name` must use the same generated name. `output/manifest.json` records it as `preset_name` alongside the original OPRA metadata.
+
+Do not manually rename generated XMLs or add per-headphone filename hacks. A normal new headphone should inherit this naming automatically from a clean `output_path`.
+
 ## Config routing rules
 
 Use the narrowest reliable representation:
@@ -84,7 +109,7 @@ A model root may contain XML files directly while also containing variant subfol
 
 ```text
 SIMGOT/EW300/
-├── AutoEQ - Measured by Kazi.xml
+├── EW300 - AutoEQ - Kazi.xml
 ├── Gold/
 ├── Silver/
 └── DSP/
@@ -121,31 +146,36 @@ perform the workflow below.
 10. Use separate entries with `include_terms` only when OPRA stores identifiable variants that should be separated into different UAPP/Drive folders.
 11. Use `include_eq_ids` when a known one-off profile needs exact routing, especially when a model root coexists with variant folders.
 12. Set `allow_partial: true` only when the user explicitly asked for a subset such as "only the red variant." Otherwise keep complete coverage.
-13. Choose clean human-readable `output_path` values in the form `Manufacturer/Model` or `Manufacturer/Model/Variant`.
-14. After changing config, verify that the GitHub Action `Update OPRA presets` runs successfully.
-15. The Action must run `src/update_docs.py` so the README supported-headphones list and `docs/PROJECT_DESCRIPTION.md` are regenerated from `config/targets.json`. Confirm the expected entries appear.
-16. Inspect `output/manifest.json`. Confirm:
+13. Choose clean human-readable `output_path` values in the form `Manufacturer/Model` or `Manufacturer/Model/Variant`. Remember that `Model [Variant]` becomes the UAPP-visible prefix.
+14. Before committing config, mentally preview representative generated names and confirm they will be concise and unambiguous in UAPP, e.g. `FT1 - Creator - Details` or `Model Variant - Creator - Details`.
+15. After changing config, verify that the GitHub Action `Update OPRA presets` runs successfully.
+16. The Action must run `src/update_docs.py` so the README supported-headphones list and `docs/PROJECT_DESCRIPTION.md` are regenerated from `config/targets.json`. Confirm the expected entries appear.
+17. Inspect `output/manifest.json`. Confirm:
    - expected preset files/creators/sources;
+   - every `preset_name` begins with the expected model/variant and follows the headphone-first convention;
+   - `preset_name` corresponds to the XML filename while original OPRA `author`/`details` remain intact;
    - coverage `mode` is `complete` unless an intentional subset was requested;
    - `unmatched_profiles` is empty for complete products;
    - duplicate-covered alias profiles are explainable;
    - there are no manifest errors.
-17. Treat a coverage/routing failure as a classification problem to investigate. Do not weaken validation to make the workflow green.
-18. After a successful build, if connected Google Drive write tools are available, immediately mirror the new/changed XML files into the matching relative folder under `Google Drive / OPRA UAPP Presets`. Create missing folders automatically.
-19. Update the Drive root `manifest.json` whenever the managed preset library changes.
-20. For parent/root targets with variant child folders, modify/delete only generated XML files at the appropriate folder level. Do not recursively delete unrelated child folders/content.
-21. The recurring Drive sync is the safety net for later OPRA changes. It derives managed folders from `config/targets.json`; do not hard-code new Drive destinations elsewhere unless the architecture changes.
-22. Confirm the final Drive folder(s), how many presets were generated/synced, the coverage result, and that README/project-description documentation was updated.
-23. If a GitHub build fails, inspect the failure and fix only the actual cause. Do not weaken validation just to make the workflow green.
+18. Treat a coverage/routing/naming failure as a problem to investigate. Do not weaken validation or manually rename generated XMLs to make the workflow green.
+19. After a successful build, if connected Google Drive write tools are available, immediately mirror the new/changed/renamed XML files into the matching relative folder under `Google Drive / OPRA UAPP Presets`. Create missing folders automatically.
+20. Remove obsolete generated filenames when a preset was renamed; do not leave both the old creator-only filename and the new headphone-first filename in Drive.
+21. Update the Drive root `manifest.json` whenever the managed preset library changes.
+22. For parent/root targets with variant child folders, modify/delete only generated XML files at the appropriate folder level. Do not recursively delete unrelated child folders/content.
+23. The recurring Drive sync is the safety net for later OPRA changes. It derives managed folders and expected filenames from `config/targets.json` and `output/manifest.json`; do not hard-code new Drive destinations elsewhere unless the architecture changes.
+24. Confirm the final Drive folder(s), how many presets were generated/synced, the coverage result, representative UAPP-visible names, and that README/project-description documentation was updated.
+25. If a GitHub build fails, inspect the failure and fix only the actual cause. Do not weaken validation just to make the workflow green.
 
 ## New-profile maintenance rule
 
 When OPRA later adds a profile to an already configured complete product:
 
-- If an existing routing rule unambiguously covers it, allow the normal build/sync.
+- If an existing routing rule unambiguously covers it, allow the normal build/sync. The new preset must automatically receive the standard headphone-first name.
 - If it falls through all rules, do not silently ignore it. Inspect the new profile and update routing.
 - If it would match multiple output folders, narrow the rules rather than duplicating it.
 - If the profile is genuinely ambiguous (for example, OPRA does not say which physical variant it represents), ask the user whether it should go in the model root, a specific variant folder, a new folder, or be intentionally excluded as part of a partial setup.
+- If the generated name does not make the headphone/model clear in UAPP, treat that as a converter/config regression rather than manually renaming the XML.
 
 The goal is to make ambiguity explicit rather than convert uncertainty into incorrect metadata/folder structure.
 
@@ -159,7 +189,10 @@ When GitHub repository metadata write access is available, also update the repos
 
 - Do not silently change EQ values.
 - Preserve OPRA preamp, frequency, gain, Q, band priority, author, details, and source attribution.
-- Do not manually edit generated XML as the normal solution.
+- Display-only preset-name compaction must never alter original OPRA metadata in the manifest.
+- Keep UAPP-visible preset names in the format `Model [Variant] - Creator - Details`, with the model first.
+- The XML filename and embedded preset `Name` must stay synchronized.
+- Do not manually edit or rename generated XML as the normal solution.
 - Do not silently ignore unsupported OPRA filter types.
 - Do not silently ignore unmatched OPRA profiles for a complete logical product.
 - Do not route one OPRA profile to multiple output folders.
@@ -184,6 +217,8 @@ When behavior or the maintenance workflow changes, update the relevant documenta
 - `docs/CHATGPT_PROJECT_INSTRUCTIONS.md`
 - `docs/NEW_USER_SETUP.md` when public/fork onboarding or new-user expectations change
 
+When preset naming behavior changes, document the UAPP-visible format, manifest field, migration/Drive rename behavior, and preservation of original OPRA metadata.
+
 Keep the documentation understandable to a non-developer.
 
 ## Communication style
@@ -197,7 +232,7 @@ Keep the documentation understandable to a non-developer.
 ## Useful commands I may give you
 
 `Add [headphone]`
-- Inspect all OPRA aliases/profiles, classify every usable profile, ask only if routing is genuinely ambiguous, update config, validate complete coverage, sync Drive, and report the result.
+- Inspect all OPRA aliases/profiles, classify every usable profile, ask only if routing is genuinely ambiguous, update config, validate complete coverage and headphone-first preset names, sync Drive, and report the result.
 
 `Remove [headphone]`
 - Remove its config target(s), rebuild safely, confirm documentation regeneration, update the managed Drive library, and explain what changed.
@@ -206,18 +241,18 @@ Keep the documentation understandable to a non-developer.
 - Read `config/targets.json` and summarize the current managed logical products/variants.
 
 `Check for new presets`
-- Inspect the latest OPRA/GitHub build. If new profiles fit existing rules, report/sync them; if coverage/routing fails, inspect the new profiles and ask for classification only when necessary.
+- Inspect the latest OPRA/GitHub build. If new profiles fit existing rules, verify their generated names and report/sync them; if coverage/routing fails, inspect the new profiles and ask for classification only when necessary.
 
 `Add every OPRA profile for [headphone]`
-- Check all formatting-only aliases and ensure complete logical-product coverage. Split identifiable variants only when needed.
+- Check all formatting-only aliases and ensure complete logical-product coverage. Split identifiable variants only when needed. Verify all resulting UAPP names begin with the correct model/variant.
 
 `Add only the [variant] version of [headphone]`
-- Inspect OPRA, use the narrowest reliable filter, and set `allow_partial: true` because the user explicitly requested a subset.
+- Inspect OPRA, use the narrowest reliable filter, and set `allow_partial: true` because the user explicitly requested a subset. The variant must appear in the generated UAPP-visible prefix.
 
 `Sync Drive now`
-- Compare `output/manifest.json` with the connected `OPRA UAPP Presets` folder and mirror all managed changes immediately, respecting parent/root versus variant folder levels.
+- Compare `output/manifest.json` with the connected `OPRA UAPP Presets` folder and mirror all managed changes immediately, including renames, while respecting parent/root versus variant folder levels.
 
 `Is Drive up to date?`
-- Compare the current GitHub manifest/output with the connected `OPRA UAPP Presets` Drive folder and report/fix differences if possible.
+- Compare the current GitHub manifest/output with the connected `OPRA UAPP Presets` Drive folder, including filenames/renames and the root manifest, and report/fix differences if possible.
 
 ---
