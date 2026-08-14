@@ -18,24 +18,28 @@ The request starts an inventory/approval workflow. ChatGPT should **not** immedi
 
 ChatGPT should:
 
-1. Inspect OPRA for the exact product.
-2. Check the same vendor for near-duplicate product records whose names differ only by spaces, punctuation, hyphens, capitalization, or similar formatting.
-3. Inventory **every usable parametric EQ profile** across those formatting-only aliases.
-4. Identify meaningful variants from OPRA IDs/details/metadata. Never infer a variant that OPRA does not identify.
-5. Build the proposed routing and generated UAPP-visible name for every candidate EQ.
-6. Present the complete candidate list to the user **before any config change**.
-7. Ask the user to choose one of these outcomes:
+1. Use GitHub search only to locate the likely exact OPRA product record.
+2. Read that product's exact `info.json` and identify the vendor, product name, subtype, and product folder.
+3. Directly enumerate the real `database/vendors/<vendor_id>/products/<product_folder>/eq/` directory. Do **not** use GitHub search results to count profiles.
+4. Open every child EQ folder's `info.json` and inventory every usable `parametric_eq`.
+5. Repeat the direct directory enumeration for formatting-only aliases that belong to the same logical product.
+6. Cross-check the exact usable parametric-EQ ID set and count against the supported OPRA `database_v1.jsonl` feed used by the converter.
+7. If the repository directory and feed disagree, stop and report the discrepancy instead of presenting an incomplete approval list.
+8. Identify meaningful variants from OPRA IDs/details/metadata. Never infer a variant that OPRA does not identify.
+9. Build the proposed routing and generated UAPP-visible name for every verified candidate EQ.
+10. Present the verified complete candidate list to the user **before any config change**.
+11. Ask the user to choose one of these outcomes:
    - **Import all**
    - **Import only selected EQs**
    - **Import all except selected EQs**
-8. If a profile cannot be confidently assigned to a folder/variant, ask the user where they want it instead of guessing.
-9. Only after the user approves the profile selection, read/update `config/targets.json` using the narrowest reliable rules.
-10. Let GitHub Actions rebuild the preset library.
-11. Verify the workflow succeeded and inspect both the generated presets and the manifest `coverage` section.
-12. Verify each generated `preset_name` starts with the expected headphone/model and variant and follows the standard UAPP-visible naming format.
-13. Confirm there are no unexplained unmatched profiles or overlapping routes and that any explicit exclusions match the user's approval.
-14. If Google Drive write actions are connected, immediately mirror the new/changed Drive files and update the Drive root `manifest.json`.
-15. Leave the recurring Drive sync as a safety net for later OPRA changes.
+12. If a profile cannot be confidently assigned to a folder/variant, ask the user where they want it instead of guessing.
+13. Only after the user approves the profile selection, read/update `config/targets.json` using the narrowest reliable rules.
+14. Let GitHub Actions rebuild the preset library.
+15. Verify the workflow succeeded and inspect both the generated presets and the manifest `coverage` section.
+16. Verify each generated `preset_name` starts with the expected headphone/model and variant and follows the standard UAPP-visible naming format.
+17. Confirm there are no unexplained unmatched profiles or overlapping routes and that any explicit exclusions match the user's approval.
+18. If Google Drive write actions are connected, immediately mirror the new/changed Drive files and update the Drive root `manifest.json`.
+19. Leave the recurring Drive sync as a safety net for later OPRA changes.
 
 If OPRA does not contain a usable parametric EQ for the headphone, ChatGPT should tell you instead of inventing one.
 
@@ -43,7 +47,7 @@ If OPRA does not contain a usable parametric EQ for the headphone, ChatGPT shoul
 
 # Required user approval before import
 
-Before config is edited, ChatGPT should show a numbered list of **all usable OPRA parametric EQs** being considered for the logical headphone.
+Before config is edited, ChatGPT should show a numbered list of **all verified usable OPRA parametric EQs** being considered for the logical headphone.
 
 For each item, show enough information for the user to recognize what they are approving:
 
@@ -55,7 +59,16 @@ For each item, show enough information for the user to recognize what they are a
 - proposed destination folder/variant;
 - source link when OPRA provides one.
 
-A compact example:
+The approval message should begin with an inventory verification summary, for example:
+
+```text
+Matched product: Sony WF-1000XM5 (in-ear)
+OPRA directory: 8 EQ folders
+Usable parametric EQs: 8
+Supported database_v1.jsonl feed: the same 8 EQ IDs
+```
+
+A compact candidate example:
 
 ```text
 1. FT1 - AutoEQ - Measurement Lab A
@@ -82,6 +95,50 @@ ChatGPT should resolve the response to exact OPRA EQ IDs and state the resulting
 
 This checkpoint is for user preference/expectation. It is separate from the technical coverage checks that protect against accidental omissions.
 
+# Authoritative inventory verification gate
+
+The candidate list is only valid after this gate passes.
+
+## GitHub search is discovery-only
+
+GitHub code search can help find an OPRA product folder, but it is not guaranteed to return every child EQ file. **Never use GitHub search results to decide how many EQ profiles exist.**
+
+Once the exact product folder is identified, directly list:
+
+`database/vendors/<vendor_id>/products/<product_folder>/eq/`
+
+Every child directory under that path must be accounted for. Open each child's `info.json` and determine whether its `type` is `parametric_eq` and therefore usable by this project.
+
+## Cross-check the supported feed
+
+The converter consumes:
+
+`https://opra.roonlabs.net/database_v1.jsonl`
+
+After direct directory enumeration, compare the exact parametric-EQ IDs from the repository with the exact IDs exposed for that product by `database_v1.jsonl`.
+
+The verified set should agree on:
+
+- exact product record;
+- exact parametric-EQ IDs;
+- total usable profile count.
+
+If they do not agree, stop before approval/config changes. Report which IDs exist only in the repository or only in the feed and investigate the source/feed state. Do not quietly pick whichever list is shorter.
+
+## Closely named products
+
+Before showing the EQ list, explicitly state the exact matched OPRA product name and subtype. If the same vendor has a very similar model name, mention it so the user can catch a one-letter mistake.
+
+Example:
+
+```text
+Matched: WF-1000XM5 (in-ear)
+Similar OPRA product also exists: WH-1000XM5 (over-ear)
+Proceeding with WF-1000XM5 because that is the requested model.
+```
+
+Do not silently substitute a similar product.
+
 # Manual method
 
 ## 1. Find the headphone in OPRA
@@ -90,16 +147,18 @@ Open the OPRA repository:
 
 `https://github.com/opra-project/OPRA`
 
-Search for the headphone model.
+Search for the headphone model. Search is only for finding the candidate product record; it is not the inventory source.
 
 The maintained product files live under paths shaped like:
 
 `database/vendors/<vendor_id>/products/<product_folder>/info.json`
 
-You need two values:
+You need:
 
-- `vendor_id`: the folder name directly under `database/vendors/`
-- `product_name`: the exact `name` value in the product's `info.json`
+- `vendor_id`: the folder name directly under `database/vendors/`;
+- `product_folder`: the exact OPRA product directory name;
+- `product_name`: the exact `name` value in the product's `info.json`;
+- `subtype`: useful for distinguishing close names such as in-ear versus over-ear products.
 
 Example for Edition XS:
 
@@ -114,9 +173,19 @@ For example, OPRA currently contains both `HD650` and `HD 650` under Sennheiser.
 
 That does not mean every similar name is automatically the same physical product. If two records normalize together but you cannot determine whether they should be combined, stop and ask the user rather than guessing.
 
-## 2. Inventory and approve the complete profile set
+## 2. Enumerate, cross-check, and approve the complete profile set
 
-Before writing config, list all usable `parametric_eq` entries for the logical product and note:
+For every relevant exact OPRA product record:
+
+1. Directly list `database/vendors/<vendor_id>/products/<product_folder>/eq/`.
+2. Count every EQ child folder.
+3. Open every child's `info.json`.
+4. Keep every entry whose `type` is `parametric_eq` as a usable candidate.
+5. Construct/record its exact OPRA EQ ID.
+6. Cross-check that exact usable ID set against the supported `database_v1.jsonl` feed.
+7. Do not proceed if the repository and feed sets disagree.
+
+For each verified usable profile, note:
 
 - exact OPRA EQ ID;
 - author;
@@ -300,7 +369,7 @@ Do not add manual filename overrides for normal headphones. Choose a clean `outp
 For every configured logical product, the converter:
 
 1. normalizes formatting-only product names (spaces/punctuation/case) to discover possible aliases;
-2. gathers every parametric EQ across those aliases;
+2. gathers every parametric EQ across those aliases from the supported feed;
 3. checks which EQs are routed by the config;
 4. validates configured exact `include_eq_ids` and `exclude_eq_ids` against the exact OPRA product;
 5. records exact user-approved exclusions separately as `explicitly_excluded_profiles`;
@@ -308,7 +377,7 @@ For every configured logical product, the converter:
 7. fails if any non-duplicate, non-excluded EQ is left unmatched unless the logical product is explicitly partial;
 8. fails if one EQ is routed to multiple different output folders.
 
-This safeguard is what prevents the original `HD650` / `HD 650` type of omission from happening silently again while still respecting the user's explicit import preferences.
+This converter check is the second line of defense. It does not replace the pre-import directory/feed verification gate, because the approval list itself must already be complete before the user makes a selection.
 
 ## 6. Save the config and check the build
 
@@ -317,7 +386,7 @@ When `config/targets.json` changes on `main`, the `Update OPRA presets` GitHub A
 It will:
 
 1. regenerate documentation;
-2. run converter tests, including the headphone-first preset-name and exact selection/exclusion tests;
+2. run converter tests, including the headphone-first preset-name, exact selection/exclusion, and documentation-safeguard tests;
 3. download the current OPRA database;
 4. validate target matching, exact include/exclude IDs, logical-product coverage, duplicate aliases, and overlapping routes;
 5. generate the XML library;
@@ -386,8 +455,12 @@ If multiple entries represent aliases or variants of one model, remove the whole
 ## Important rules
 
 - Never invent OPRA product names, IDs, variants, or EQ profiles.
+- GitHub search is discovery-only; never use search result counts as the EQ inventory.
+- Always directly enumerate the exact OPRA `eq/` directory and open every child `info.json`.
+- Always cross-check the verified parametric-EQ ID set against `database_v1.jsonl` before showing the approval list.
 - Always inventory formatting-only OPRA aliases before selecting targets.
-- **Never edit config for a new headphone until the user has seen the full candidate EQ list and approved the import set.**
+- Explicitly state the exact matched product name/subtype when closely named sibling products exist.
+- **Never edit config for a new headphone until the user has seen the verified full candidate EQ list and approved the import set.**
 - Complete accounting is the technical default, but the user's approved selection controls which EQs are imported.
 - Ask the user when classification is genuinely ambiguous; do not guess a folder.
 - Use exact `include_eq_ids` for fixed user-selected EQ sets or one-off routing when that is safer than a broad text filter.
