@@ -71,19 +71,21 @@ perform the workflow below.
    - `docs/PROJECT_DESCRIPTION.md`
    - `output/manifest.json`
 2. Inspect current OPRA data and identify the exact vendor id, product name, available parametric EQ profiles, and any meaningful product/tuning variants.
-3. Never invent a vendor id, product name, variant, or EQ profile.
-4. If OPRA does not contain usable parametric EQ data for the requested headphone, tell me clearly and do not add a fake target.
-5. For a normal headphone addition, edit only `config/targets.json` unless there is a real technical reason the current converter cannot represent the target.
-6. Use a simple target with no `include_terms` when all OPRA EQ profiles for the product belong together.
-7. Use separate target entries with `include_terms` only when OPRA stores identifiable variants that should be separated into different UAPP/Drive folders.
-8. Choose a clean human-readable `output_path` in the form `Manufacturer/Model` or `Manufacturer/Model/Variant`.
-9. After changing the config, verify that the GitHub Action `Update OPRA presets` runs successfully.
-10. The GitHub Action must run `src/update_docs.py` so the `README.md` supported-headphones list and `docs/PROJECT_DESCRIPTION.md` are regenerated from `config/targets.json`. Confirm the newly added headphone appears in both places.
-11. Inspect `output/manifest.json` after the build and confirm the expected profiles were generated, including creator attribution and source information.
-12. After a successful build, if connected Google Drive write tools are available, immediately mirror the new or changed XML files into the matching relative folder under `Google Drive / OPRA UAPP Presets`. Create missing folders automatically. Do not make me wait for the scheduled sync when the sync can be completed in the current chat.
-13. The recurring Drive sync is the safety net for later OPRA changes. It derives managed folders from `config/targets.json`, so do not hard-code new Drive destinations into another automation unless the architecture has changed.
-14. Confirm the final Drive folder, how many presets were generated/synced, and that README/project-description documentation was updated.
-15. If the GitHub build fails, inspect the failure and fix only the actual cause. Do not weaken validation just to make the workflow green.
+3. Search the same OPRA vendor for near-duplicate product records whose names differ only by spaces, punctuation, hyphens, capitalization, or similar formatting. Compare their product metadata and available parametric EQ profiles before selecting a target. Do not assume the first similar-looking record is the complete/canonical one. If multiple records remain genuinely ambiguous, explain the ambiguity rather than guessing.
+4. Never invent a vendor id, product name, variant, or EQ profile.
+5. If OPRA does not contain usable parametric EQ data for the requested headphone, tell me clearly and do not add a fake target.
+6. For a normal headphone addition, edit only `config/targets.json` unless there is a real technical reason the current converter cannot represent the target.
+7. Use a simple target with no `include_terms` when all OPRA EQ profiles for the product belong together.
+8. Use separate target entries with `include_terms` only when OPRA stores identifiable variants that should be separated into different UAPP/Drive folders.
+9. Choose a clean human-readable `output_path` in the form `Manufacturer/Model` or `Manufacturer/Model/Variant`.
+10. After changing the config, verify that the GitHub Action `Update OPRA presets` runs successfully.
+11. The GitHub Action must run `src/update_docs.py` so the `README.md` supported-headphones list and `docs/PROJECT_DESCRIPTION.md` are regenerated from `config/targets.json`. Confirm the newly added headphone appears in both places.
+12. Inspect `output/manifest.json` after the build and confirm the expected profiles were generated, including creator attribution and source information. Compare the generated preset count for the target against the usable parametric EQ profiles found in the selected OPRA product (or the expected filtered subset when `include_terms` is used). Treat an unexpected count difference as a problem to investigate before Drive sync.
+13. After a successful build, if connected Google Drive write tools are available, immediately mirror the new or changed XML files into the matching relative folder under `Google Drive / OPRA UAPP Presets`. Create missing folders automatically. Do not make me wait for the scheduled sync when the sync can be completed in the current chat.
+14. Update the Drive root `manifest.json` whenever the managed preset library changes.
+15. The recurring Drive sync is the safety net for later OPRA changes. It derives managed folders from `config/targets.json`, so do not hard-code new Drive destinations into another automation unless the architecture has changed.
+16. Confirm the final Drive folder, how many presets were generated/synced, and that README/project-description documentation was updated.
+17. If the GitHub build fails, inspect the failure and fix only the actual cause. Do not weaken validation just to make the workflow green.
 
 ## Project-description rule
 
@@ -131,7 +133,7 @@ Keep the documentation understandable to a non-developer.
 ## Useful commands I may give you
 
 `Add [headphone]`
-- Find it in OPRA, add the config target(s), validate the build, confirm README/project-description regeneration, immediately sync the resulting XMLs to Drive when possible, and tell me where they were placed.
+- Find it in OPRA, check near-duplicate product records, add the config target(s), validate the build and expected profile count, confirm README/project-description regeneration, immediately sync the resulting XMLs and root manifest to Drive when possible, and tell me where they were placed.
 
 `Remove [headphone]`
 - Remove its config target(s), rebuild safely, confirm README/project-description regeneration, update the managed Drive library when possible, and explain what changed.
@@ -143,7 +145,7 @@ Keep the documentation understandable to a non-developer.
 - Inspect the latest OPRA/GitHub build and tell me whether any configured headphone presets changed.
 
 `Add every OPRA profile for [headphone]`
-- Add the product without variant filtering unless OPRA requires separate product/variant entries.
+- Check near-duplicate OPRA product records first, then add the selected product without variant filtering unless OPRA requires separate product/variant entries.
 
 `Add only the [variant] version of [headphone]`
 - Inspect OPRA and use the narrowest reliable config representation, normally `include_terms` when appropriate.
