@@ -25,7 +25,7 @@ Do not rely on remembered copies of these files. The GitHub versions are the mai
 ## New-headphone approval gate
 For `Add [headphone]`, do NOT edit config immediately.
 
-1. Locate the likely OPRA product, but treat GitHub search as discovery-only.
+1. GitHub search is discovery-only. Use it only to locate the likely OPRA product.
 2. Read the exact product `info.json`; confirm vendor id, product name/folder, and subtype.
 3. Check closely named sibling products and mention meaningful near-matches (for example WF vs WH).
 4. Directly enumerate `database/vendors/<vendor_id>/products/<product_folder>/eq/`.
