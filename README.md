@@ -49,16 +49,18 @@ Use the ChatGPT Project connected to this repository and say:
 
 > Add the FiiO FT1 to my OPRA UAPP presets.
 
-The intended workflow is:
+The intended workflow is deliberately **two-stage**:
 
-1. ChatGPT checks current OPRA data for the exact headphone, formatting-only product aliases, available parametric EQ profiles, and identifiable variants.
-2. Every usable OPRA parametric profile is accounted for by the proposed routing. If a profile cannot be classified confidently, ChatGPT asks which folder/subset you want instead of guessing.
-3. ChatGPT updates `config/targets.json`.
-4. GitHub Actions automatically rebuilds and validates the XML library, including profile-coverage, route-exclusivity, and preset-naming checks.
-5. GitHub Actions refreshes the README supported-headphones list and generated project description from the config.
-6. ChatGPT verifies the generated manifest and UAPP-visible preset names and, when Drive write access is available, immediately syncs the new/changed XML files into the matching folder under `Google Drive / OPRA UAPP Presets`.
-7. The recurring Drive sync remains a safety net for later OPRA changes.
-8. You access the XML from Drive and import it into UAPP.
+1. ChatGPT checks current OPRA data for the exact headphone, formatting-only product aliases, every usable parametric EQ profile, and identifiable variants.
+2. ChatGPT shows the user the complete candidate EQ list **before changing config**, including each proposed UAPP-visible preset name and destination folder.
+3. The user explicitly chooses **Import all**, **Import only selected EQs**, or **Import all except selected EQs**. ChatGPT does not write `config/targets.json` until this approval is received.
+4. If a profile cannot be classified confidently, ChatGPT asks which folder/variant it belongs to instead of guessing.
+5. ChatGPT translates the approved selection into the narrowest reliable config representation.
+6. GitHub Actions automatically rebuilds and validates the XML library, including profile-coverage, exact-ID selection/exclusion, route-exclusivity, and preset-naming checks.
+7. GitHub Actions refreshes the README supported-headphones list and generated project description from the config.
+8. ChatGPT verifies the generated manifest and UAPP-visible preset names and, when Drive write access is available, immediately syncs the new/changed XML files into the matching folder under `Google Drive / OPRA UAPP Presets`.
+9. The recurring Drive sync remains a safety net for later OPRA changes.
+10. You access the XML from Drive and import it into UAPP.
 
 The reusable Project Instructions are stored here:
 
@@ -67,6 +69,40 @@ The reusable Project Instructions are stored here:
 For manual additions, including copy/paste JSON examples:
 
 [`docs/ADDING_HEADPHONES.md`](docs/ADDING_HEADPHONES.md)
+
+## Required pre-import EQ approval
+
+A request such as `Add the FiiO FT1` is **not** permission to immediately import every discovered profile. It starts an inventory/approval step.
+
+Before editing config, ChatGPT must present every usable OPRA parametric EQ that would be considered for the logical headphone, across formatting-only aliases. The list should be easy to select from and should include:
+
+- a numbered item;
+- proposed UAPP-visible preset name;
+- OPRA creator/author;
+- OPRA details/measurement description;
+- exact OPRA EQ ID;
+- OPRA band count;
+- proposed destination folder/variant;
+- source link when OPRA supplies one.
+
+The user can then reply in natural language, for example:
+
+```text
+Import all
+Only 1, 3, and 5
+All except 2 and 4
+Import all except the Rtings measurement
+```
+
+For **Import all**, normal complete-coverage routing is used.
+
+For **Import only selected EQs**, use exact `include_eq_ids` wherever practical and `allow_partial: true` so the chosen set is explicit and stable. Profiles not selected remain visible as unmatched in the manifest's intentional partial coverage report.
+
+For **Import all except selected EQs**, use exact `exclude_eq_ids`. Explicit exclusions are recorded separately in manifest coverage and do **not** weaken the guard against accidental unmatched profiles.
+
+Configured exact include/exclude IDs are validated against the current OPRA product. A typo or stale exact ID makes the build fail instead of silently importing/excluding the wrong thing. The same EQ ID cannot be both included and excluded in one target.
+
+This approval checkpoint is a user-preference safeguard, separate from the converter's technical completeness checks.
 
 ## UAPP-visible preset naming
 
@@ -99,35 +135,40 @@ This naming rule is converter-level behavior. Do not manually rename generated X
 
 ## Completeness and routing safeguards
 
-The default policy is **complete coverage**: when a product is configured, every usable OPRA parametric EQ profile for that logical product must either be imported or be an exact semantic duplicate of an imported profile.
+The default policy is **complete accounting**: when a product is configured, every usable OPRA parametric EQ profile for that logical product must be imported, be an exact semantic duplicate of an imported profile, or be explicitly excluded by exact OPRA EQ ID after user approval.
 
 The converter also treats product names that differ only by formatting as possible aliases for coverage purposes. For example, `HD650` and `HD 650` normalize to the same logical product, so profiles cannot silently disappear just because OPRA stores them under separate records.
 
 The build fails when:
 
 - a configured target matches no OPRA profiles;
-- an OPRA parametric profile for a configured logical product is not routed anywhere;
+- an OPRA parametric profile for a configured logical product is not routed, duplicate-covered, explicitly excluded, or intentionally part of a user-approved fixed subset;
+- a configured `include_eq_ids` or `exclude_eq_ids` entry does not exist for that exact OPRA product;
+- the same exact EQ ID is both included and excluded in one target;
 - one OPRA profile is routed to multiple output folders;
 - an unsupported filter type or out-of-range value is encountered.
 
-If a user explicitly wants only a subset, the target can set `"allow_partial": true`. This must be an intentional user choice, not a way to make an unexplained coverage failure green.
+If a user explicitly wants only a fixed subset, the target can set `"allow_partial": true`. This must be an intentional user choice, not a way to make an unexplained coverage failure green.
+
+For a user-approved exact exclusion from an otherwise complete product, `exclude_eq_ids` records the choice without turning off future unmatched-profile detection.
 
 For a known one-off profile that belongs in a root model folder while sibling profiles belong in variants, `include_eq_ids` can select the exact OPRA EQ ID. This is how the unclassified SIMGOT EW300 Kazi measurement is kept directly under `SIMGOT/EW300` without guessing Gold or Silver. If OPRA later adds another unclassified EW300 profile, the coverage check will fail until it is deliberately classified.
 
-`output/manifest.json` includes a `coverage` section showing complete/partial mode, matched profile counts, duplicate-covered aliases, and any unmatched profile IDs.
+`output/manifest.json` includes a `coverage` section showing complete/partial mode, matched profile counts, duplicate-covered aliases, explicitly excluded profile IDs, and any unmatched profile IDs.
 
 ## How it works
 
 1. Downloads OPRA's supported `database_v1.jsonl` feed.
 2. Matches configured headphones using exact OPRA vendor/product metadata and explicit routing rules.
-3. Audits formatting-only product aliases and validates that profiles are completely and unambiguously routed unless an intentional partial import is configured.
-4. Generates a UAPP-visible headphone-first preset name from each configured `output_path` plus OPRA creator/details metadata.
-5. Converts OPRA preamp, frequency, gain, Q, and supported filter types into ToneBoosters' normalized preset representation.
-6. Writes UAPP-compatible `.xml` files under `output/`, using the same generated value for the filename and embedded preset name.
-7. Writes `output/manifest.json` with generated `preset_name`, OPRA IDs, original creator/details, source links, source band counts, coverage status, and conversion warnings.
-8. Regenerates the README supported-headphones section and project-description text from `config/targets.json`.
-9. GitHub Actions runs the converter daily and whenever converter/config/test files change.
-10. A scheduled ChatGPT task can compare GitHub output with Google Drive and mirror changed presets into the connected user's private `OPRA UAPP Presets` folder.
+3. Audits formatting-only product aliases and validates that profiles are completely and unambiguously accounted for unless an intentional fixed subset is configured.
+4. Validates configured exact include/exclude EQ IDs against the current OPRA product.
+5. Generates a UAPP-visible headphone-first preset name from each configured `output_path` plus OPRA creator/details metadata.
+6. Converts OPRA preamp, frequency, gain, Q, and supported filter types into ToneBoosters' normalized preset representation.
+7. Writes UAPP-compatible `.xml` files under `output/`, using the same generated value for the filename and embedded preset name.
+8. Writes `output/manifest.json` with generated `preset_name`, OPRA IDs, original creator/details, source links, source band counts, coverage status, explicit exclusions, and conversion warnings.
+9. Regenerates the README supported-headphones section and project-description text from `config/targets.json`.
+10. GitHub Actions runs the converter daily and whenever converter/config/test files change.
+11. A scheduled ChatGPT task can compare GitHub output with Google Drive and mirror changed presets into the connected user's private `OPRA UAPP Presets` folder.
 
 ## Output folders
 
@@ -203,7 +244,7 @@ Preset naming is also deterministic and derived from target configuration plus O
 
 The recurring Drive sync runs separately through ChatGPT's connected GitHub and Google Drive apps. It reads `config/targets.json` and `output/manifest.json`, so adding a new configured `output_path` does **not** require hard-coding another Drive destination.
 
-When a headphone is added through the ChatGPT Project, the Project instructions tell ChatGPT to sync the affected Drive files immediately after a successful GitHub build when possible. The recurring task then handles future unattended OPRA updates.
+When a headphone is added through the ChatGPT Project, the Project instructions require the user EQ-selection approval checkpoint **before** config changes and then tell ChatGPT to sync the affected Drive files immediately after a successful GitHub build when possible. The recurring task then handles future unattended OPRA updates.
 
 More detail:
 
@@ -223,12 +264,12 @@ You normally do not need to run this locally. GitHub Actions handles it automati
 
 ## Important files
 
-- `config/targets.json` — the headphones/variants being managed and their explicit routing rules.
-- `src/build_presets.py` — converter, UAPP-visible naming, and profile-coverage validation logic.
+- `config/targets.json` — the headphones/variants being managed and their explicit routing/selection rules.
+- `src/build_presets.py` — converter, UAPP-visible naming, exact-ID selection/exclusion, and profile-coverage validation logic.
 - `src/update_docs.py` — automatically updates supported-headphone documentation from the config.
-- `output/manifest.json` — source of truth for generated preset filenames/names, OPRA metadata, and coverage status.
+- `output/manifest.json` — source of truth for generated preset filenames/names, OPRA metadata, exclusions, and coverage status.
 - `docs/PROJECT_DESCRIPTION.md` — generated project-description text reflecting current configured headphones.
-- `docs/ADDING_HEADPHONES.md` — beginner-friendly manual addition, naming, and routing guide.
+- `docs/ADDING_HEADPHONES.md` — beginner-friendly manual addition, approval, naming, and routing guide.
 - `docs/CHATGPT_PROJECT_INSTRUCTIONS.md` — reusable instructions for a ChatGPT Project.
 - `docs/NEW_USER_SETUP.md` — setup guide for a user's own fork and private Google Drive.
 - `docs/AUTOMATION.md` — GitHub → OPRA → Drive automation architecture.
