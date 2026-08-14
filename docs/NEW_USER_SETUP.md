@@ -146,15 +146,42 @@ Then test Drive access with:
 
 ChatGPT should compare your fork's current manifest/output with **your** `OPRA UAPP Presets` folder, including renamed or obsolete generated XML filenames.
 
-## 8. Understand the new-headphone approval step
+## 8. Understand verified discovery before the new-headphone approval step
 
 When you say:
 
 `Add the FiiO FT1 to my presets`
 
-ChatGPT should **not immediately import every EQ it finds**.
+ChatGPT should not trust a few GitHub search hits as the complete EQ inventory. **GitHub search is only for locating the product.**
 
-First, it should inspect current OPRA and show you the full candidate EQ list for the logical headphone, including formatting-only aliases. Each item should include the proposed UAPP-visible name, creator/details, exact OPRA EQ ID, band count, proposed destination folder/variant, and source link when available.
+After the exact OPRA product is identified, ChatGPT should directly enumerate:
+
+`database/vendors/<vendor_id>/products/<product_folder>/eq/`
+
+It should open every child folder's `info.json`, identify all usable `parametric_eq` entries, do the same for formatting-only aliases, and then cross-check the exact usable EQ ID set against the supported converter feed:
+
+`https://opra.roonlabs.net/database_v1.jsonl`
+
+Only when the repository `eq/` directory and `database_v1.jsonl` agree should ChatGPT present the approval list.
+
+The response should make the verification visible, for example:
+
+```text
+Matched product: Sony WF-1000XM5 (in-ear)
+OPRA directory: 8 EQ folders
+Usable parametric EQs: 8
+Supported database_v1.jsonl feed: the same 8 EQ IDs
+```
+
+If the same manufacturer has a very similar model, ChatGPT should mention it before the list. For example, Sony has separate `WF-1000XM5` and `WH-1000XM5` products. The model name and subtype should make clear which record is being used.
+
+If the primary OPRA directory and supported feed disagree, ChatGPT should stop and explain the discrepancy rather than asking you to approve an incomplete or uncertain list.
+
+## 9. Understand the new-headphone approval step
+
+After verified discovery, ChatGPT should **not immediately import every EQ it finds**.
+
+First, it should show you the verified full candidate EQ list for the logical headphone, including formatting-only aliases. Each item should include the proposed UAPP-visible name, creator/details, exact OPRA EQ ID, band count, proposed destination folder/variant, and source link when available.
 
 You then choose one of three simple outcomes:
 
@@ -185,9 +212,9 @@ If you choose **Import all except selected EQs**, the project records exact `exc
 
 The converter validates exact include/exclude IDs against OPRA. A typo or stale ID causes a build failure rather than silently changing your preference.
 
-## 9. Understand the completeness safeguard before customizing
+## 10. Understand the completeness safeguard before customizing
 
-The project deliberately audits **every usable OPRA parametric EQ profile** for a configured logical product.
+The project deliberately audits **every usable OPRA parametric EQ profile** for a configured logical product in the supported feed.
 
 This includes checking formatting-only OPRA product aliases. For example, if OPRA stores `Model X` and `Model-X` as separate records but their normalized names collide, the converter audits profiles across both records instead of trusting only the first one found.
 
@@ -199,9 +226,10 @@ A red coverage error usually means one of these things:
 - a formatting-only alias contains additional profiles;
 - a new/changed variant does not fit the current folder rules;
 - a broad rule overlaps another variant rule;
-- an exact include/exclude ID is stale or mistyped.
+- an exact include/exclude ID is stale or mistyped;
+- the primary OPRA repository and supported feed need to be compared because their states may have diverged.
 
-Do not bypass the error automatically. Inspect the profile or exact selection first.
+Do not bypass the error automatically. Inspect the product directory/feed and the profile or exact selection first.
 
 If the intended folder is obvious from OPRA metadata, update the config. If the profile is ambiguous, ChatGPT should ask you what you want before assigning a folder.
 
@@ -209,7 +237,7 @@ Only use `allow_partial: true` when you explicitly want a subset. It should not 
 
 `output/manifest.json` records exact exclusions as `explicitly_excluded_profiles`, so you can distinguish a profile you intentionally declined from one that was accidentally missed.
 
-## 10. Customize the headphones in your fork
+## 11. Customize the headphones in your fork
 
 The fork initially contains the upstream project's configured headphones. Remove any you do not want and add your own.
 
@@ -219,23 +247,26 @@ The easiest request is:
 
 For a normal addition, ChatGPT should:
 
-1. inspect OPRA and formatting-only aliases;
-2. inventory every usable parametric EQ;
-3. classify identifiable variants without guessing;
-4. show you the complete candidate list with proposed UAPP names/folders;
-5. wait for your all/only/all-except approval;
-6. update `config/targets.json` to represent exactly what you approved;
-7. verify a green GitHub build with correct coverage/exclusion accounting;
-8. verify generated `preset_name` values begin with the expected model/variant;
-9. mirror the resulting XML files and root manifest into your Drive.
+1. locate and confirm the exact OPRA product/subtype;
+2. mention relevant closely named sibling products;
+3. directly enumerate every relevant OPRA `eq/` directory;
+4. open every child EQ `info.json`;
+5. cross-check the exact usable parametric-EQ ID set with `database_v1.jsonl`;
+6. classify identifiable variants without guessing;
+7. show you the verified complete candidate list with proposed UAPP names/folders;
+8. wait for your all/only/all-except approval;
+9. update `config/targets.json` to represent exactly what you approved;
+10. verify a green GitHub build with correct coverage/exclusion accounting;
+11. verify generated `preset_name` values begin with the expected model/variant;
+12. mirror the resulting XML files and root manifest into your Drive.
 
 See `docs/ADDING_HEADPHONES.md` for config details including `include_terms`, exact `include_eq_ids`, exact `exclude_eq_ids`, intentional `allow_partial` subsets, and the generated naming rule.
 
-## 11. What happens when OPRA changes later
+## 12. What happens when OPRA changes later
 
 The scheduled GitHub build re-runs coverage validation against the current OPRA feed.
 
-If OPRA adds a profile that your existing complete routing does not cover, the build turns red instead of silently dropping it or guessing a folder. When you ask ChatGPT to check the failure, it should inspect the new profile and either update an unambiguous rule or ask you for a classification choice.
+If OPRA adds a profile that your existing complete routing does not cover, the build turns red instead of silently dropping it or guessing a folder. When you ask ChatGPT to check the failure, it should compare the exact OPRA product `eq/` directory with `database_v1.jsonl`, inspect the new profile, and either update an unambiguous rule or ask you for a classification choice.
 
 If the profile fits an existing complete/all-except route, it is generated automatically with the correct headphone-first preset name. An exact `exclude_eq_ids` choice excludes only the IDs you explicitly declined.
 
@@ -243,7 +274,7 @@ If you chose a fixed exact-ID subset, newly added profiles remain outside that s
 
 This is a safety feature. It keeps your library aligned with both OPRA and your explicit preferences without inventing metadata.
 
-## 12. Optional recurring Drive sync
+## 13. Optional recurring Drive sync
 
 The GitHub Action updates the generated GitHub output automatically. Google Drive mirroring is a separate ChatGPT-connected workflow because the repository intentionally stores **no Google credentials**.
 
@@ -260,7 +291,7 @@ If your ChatGPT environment supports scheduled tasks with connected apps, create
 9. updates the Drive root `manifest.json`;
 10. does nothing when Drive is already current.
 
-The recurring task is only a safety net. When you add a headphone interactively, ChatGPT should sync the affected Drive files immediately when write actions are available **after your EQ selection has been approved and the build has passed**.
+The recurring task is only a safety net. When you add a headphone interactively, ChatGPT should sync the affected Drive files immediately when write actions are available **after the inventory is verified, your EQ selection has been approved, and the build has passed**.
 
 ## Privacy summary
 
@@ -269,4 +300,4 @@ The recurring task is only a safety net. When you add a headphone interactively,
 - Making or using a public fork does **not** make your Drive public.
 - Do not commit Google credentials, OAuth tokens, service-account files, or private Drive links/IDs to GitHub.
 - Each user connects ChatGPT separately to their own GitHub account/fork and their own Google account/Drive.
-- Profile/folder ambiguity and EQ selection should be resolved through explicit config/user choices, never through credentials or hidden external state.
+- Product identity, OPRA inventory, profile/folder ambiguity, and EQ selection should be resolved through verified source data and explicit user choices, never through partial search results, credentials, or hidden external state.
