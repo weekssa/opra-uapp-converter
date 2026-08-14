@@ -37,6 +37,14 @@ jobs:
       - name: Generate presets from OPRA
         run: python src/build_presets.py
 
+      - name: Upload generated presets artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: opra-uapp-presets
+          path: output/
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Commit updated presets
         run: |
           git config user.name "github-actions[bot]"
