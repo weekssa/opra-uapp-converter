@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+# Copyright 2026 weekssa and contributors
+# SPDX-License-Identifier: Apache-2.0
+#
+# ToneBoosters/UAPP normalization and XML mapping in this file is based in
+# part on SiliconExarch/EqConverter (Apache-2.0). This implementation has
+# been substantially rewritten and extended for OPRA. See NOTICE.
 """Build ToneBoosters/UAPP 10-band XML presets from the OPRA JSONL feed."""
 from __future__ import annotations
 
