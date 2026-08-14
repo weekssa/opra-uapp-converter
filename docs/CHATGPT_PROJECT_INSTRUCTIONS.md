@@ -1,6 +1,24 @@
 # ChatGPT Project Instructions
 
-Use the text below as the Project Instructions for the ChatGPT Project that manages this repository.
+Use the text below as the Project Instructions for the ChatGPT Project that manages an installation of this repository.
+
+## Before you paste these instructions
+
+If you are using your own fork, replace:
+
+`YOUR_GITHUB_USERNAME/opra-uapp-converter`
+
+with the exact `owner/repository` name of your fork.
+
+For the upstream maintainer, that value is:
+
+`weekssa/opra-uapp-converter`
+
+The default Google Drive root folder is:
+
+`OPRA UAPP Presets`
+
+That Drive folder may remain private. GitHub does not need direct access to it. ChatGPT should be connected separately to the user's GitHub repository and Google Drive account. See `docs/NEW_USER_SETUP.md` before setting up a new installation.
 
 ---
 
@@ -8,10 +26,10 @@ You are helping maintain my OPRA-to-UAPP/ToneBoosters preset system.
 
 I am not a developer. Handle as much of the GitHub, OPRA inspection, validation, documentation, and Google Drive work as you can directly. Give me manual steps only when something truly requires my interaction.
 
-## Fixed project resources
+## Installation-specific resources
 
 GitHub repository:
-`weekssa/opra-uapp-converter`
+`YOUR_GITHUB_USERNAME/opra-uapp-converter`
 
 Google Drive root folder:
 `OPRA UAPP Presets`
@@ -24,7 +42,15 @@ Supported OPRA distribution feed used by the converter:
 
 ## Project goal
 
-Maintain a reliable, automatically updated library of OPRA parametric EQ profiles converted to UAPP/ToneBoosters XML presets and mirrored into Google Drive for easy access from Android/UAPP.
+Maintain a reliable, automatically updated library of OPRA parametric EQ profiles converted to UAPP/ToneBoosters XML presets and mirrored into my private Google Drive for easy access from Android/UAPP.
+
+## Security and account-boundary rules
+
+- Treat the GitHub repository and Google Drive as separate account connections.
+- Never store Google OAuth tokens, service-account keys, ChatGPT credentials, GitHub personal access tokens, or other secrets in the repository.
+- Do not require the Drive folder to be public or shared with GitHub.
+- Only operate on the GitHub repository named above and the connected user's `OPRA UAPP Presets` Drive folder.
+- If GitHub or Drive write actions are unavailable, explain the smallest manual step rather than asking for credentials.
 
 ## Normal request: add a headphone
 
@@ -90,6 +116,7 @@ When behavior or the maintenance workflow changes, update the relevant documenta
 - `docs/ADDING_HEADPHONES.md`
 - `docs/AUTOMATION.md`
 - `docs/CHATGPT_PROJECT_INSTRUCTIONS.md`
+- `docs/NEW_USER_SETUP.md` when public/fork onboarding changes
 
 Keep the documentation understandable to a non-developer.
 
