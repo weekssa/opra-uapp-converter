@@ -52,6 +52,7 @@ class Target:
     output_path: str
     include_terms: tuple[str, ...] = ()
     include_eq_ids: tuple[str, ...] = ()
+    exclude_eq_ids: tuple[str, ...] = ()
     allow_partial: bool = False
 
 
@@ -59,12 +60,21 @@ def load_config(path: Path) -> list[Target]:
     raw = json.loads(path.read_text(encoding="utf-8"))
     targets = []
     for item in raw["targets"]:
+        include_eq_ids = tuple(str(eq_id).casefold() for eq_id in item.get("include_eq_ids", []))
+        exclude_eq_ids = tuple(str(eq_id).casefold() for eq_id in item.get("exclude_eq_ids", []))
+        overlap = sorted(set(include_eq_ids) & set(exclude_eq_ids))
+        if overlap:
+            raise ValueError(
+                f"Configured target {item['vendor_id']} / {item['product_name']} includes and excludes the same OPRA EQ ID(s): "
+                + ", ".join(overlap)
+            )
         targets.append(Target(
             vendor_id=item["vendor_id"],
             product_name=item["product_name"],
             output_path=item["output_path"],
             include_terms=tuple(t.casefold() for t in item.get("include_terms", [])),
-            include_eq_ids=tuple(str(eq_id).casefold() for eq_id in item.get("include_eq_ids", [])),
+            include_eq_ids=include_eq_ids,
+            exclude_eq_ids=exclude_eq_ids,
             allow_partial=bool(item.get("allow_partial", False)),
         ))
     return targets
@@ -246,12 +256,50 @@ def target_matches(target: Target, product: dict[str, Any], eq_id: str, eq: dict
         return False
     if product.get("name", "").casefold() != target.product_name.casefold():
         return False
-    if target.include_eq_ids and eq_id.casefold() not in target.include_eq_ids:
+    eq_id_key = eq_id.casefold()
+    if eq_id_key in target.exclude_eq_ids:
+        return False
+    if target.include_eq_ids and eq_id_key not in target.include_eq_ids:
         return False
     if not target.include_terms:
         return True
     haystack = " ".join((eq_id, str(eq.get("details", "")), str(eq.get("author", "")))).casefold()
     return any(term in haystack for term in target.include_terms)
+
+
+def validate_configured_eq_ids(
+    targets: list[Target],
+    products: dict[str, Any],
+    eqs: list[dict[str, Any]],
+) -> list[str]:
+    """Require every configured exact include/exclude EQ ID to exist for that exact target product."""
+    errors: list[str] = []
+    for target in targets:
+        if not target.include_eq_ids and not target.exclude_eq_ids:
+            continue
+        product_ids = {
+            product_id
+            for product_id, product in products.items()
+            if product.get("vendor_id", "").casefold() == target.vendor_id.casefold()
+            and str(product.get("name", "")).casefold() == target.product_name.casefold()
+        }
+        available_ids = {
+            entry["id"].casefold()
+            for entry in eqs
+            if entry["data"].get("type") == "parametric_eq"
+            and entry["data"].get("product_id") in product_ids
+        }
+        for field_name, configured_ids in (
+            ("include_eq_ids", target.include_eq_ids),
+            ("exclude_eq_ids", target.exclude_eq_ids),
+        ):
+            missing = sorted(eq_id for eq_id in configured_ids if eq_id not in available_ids)
+            if missing:
+                errors.append(
+                    f"Configured {field_name} contains OPRA EQ ID(s) not found for "
+                    f"{target.vendor_id} / {target.product_name}: {', '.join(missing)}"
+                )
+    return errors
 
 
 def build_coverage_report(
@@ -276,6 +324,11 @@ def build_coverage_report(
     for key, group_targets in sorted(groups.items()):
         vendor_id, normalized_name = key
         partial = any(target.allow_partial for target in group_targets)
+        explicit_exclusion_ids = {
+            eq_id
+            for target in group_targets
+            for eq_id in target.exclude_eq_ids
+        }
         product_ids = {
             product_id
             for product_id, product in products.items()
@@ -290,10 +343,14 @@ def build_coverage_report(
         matched = matched_by_group.get(key, {})
         matched_fingerprints = {eq_fingerprint(eq) for eq in matched.values()}
         duplicate_covered: list[str] = []
+        explicitly_excluded: list[str] = []
         unmatched: list[str] = []
         for entry in group_eqs:
             eq_id = entry["id"]
             if eq_id in matched:
+                continue
+            if eq_id.casefold() in explicit_exclusion_ids:
+                explicitly_excluded.append(eq_id)
                 continue
             if eq_fingerprint(entry["data"]) in matched_fingerprints:
                 duplicate_covered.append(eq_id)
@@ -308,13 +365,15 @@ def build_coverage_report(
             "opra_parametric_profiles": len(group_eqs),
             "matched_profiles": len(matched),
             "duplicate_profiles_covered": len(duplicate_covered),
+            "explicitly_excluded_profiles": explicitly_excluded,
             "unmatched_profiles": unmatched,
         })
         if unmatched and not partial:
             errors.append(
                 f"Unmatched OPRA parametric EQ profiles for {group_targets[0].vendor_id} / "
                 f"{' / '.join(display_names) or group_targets[0].product_name}: {', '.join(unmatched)}. "
-                "Classify them with config targets, or set allow_partial=true only when the user explicitly wants a subset."
+                "Classify them with config targets, explicitly exclude exact IDs only after user approval, "
+                "or set allow_partial=true only when the user explicitly wants a fixed subset."
             )
     return report, errors
 
@@ -322,6 +381,7 @@ def build_coverage_report(
 def write_presets(source: str, config_path: Path, output_root: Path) -> dict[str, Any]:
     targets = load_config(config_path)
     vendors, products, eqs = index_database(read_jsonl(source))
+    configured_id_errors = validate_configured_eq_ids(targets, products, eqs)
 
     candidates: list[tuple[Target, str, dict[str, Any], str, dict[str, Any]]] = []
     matched_counts = [0 for _ in targets]
@@ -357,7 +417,7 @@ def write_presets(source: str, config_path: Path, output_root: Path) -> dict[str
     name_counts = Counter((target.output_path, preset_display_name(target, eq)) for target, _, eq, _, _ in candidates)
     used_paths: set[str] = set()
     manifest_entries: list[dict[str, Any]] = []
-    errors: list[str] = list(routing_errors) + list(coverage_errors)
+    errors: list[str] = list(configured_id_errors) + list(routing_errors) + list(coverage_errors)
 
     for target, eq_id, eq, product_id, product in candidates:
         try:
