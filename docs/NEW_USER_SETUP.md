@@ -146,28 +146,70 @@ Then test Drive access with:
 
 ChatGPT should compare your fork's current manifest/output with **your** `OPRA UAPP Presets` folder, including renamed or obsolete generated XML filenames.
 
-## 8. Understand the completeness safeguard before customizing
+## 8. Understand the new-headphone approval step
 
-The project deliberately defaults to **bringing over every usable OPRA parametric EQ profile** for a configured logical product.
+When you say:
+
+`Add the FiiO FT1 to my presets`
+
+ChatGPT should **not immediately import every EQ it finds**.
+
+First, it should inspect current OPRA and show you the full candidate EQ list for the logical headphone, including formatting-only aliases. Each item should include the proposed UAPP-visible name, creator/details, exact OPRA EQ ID, band count, proposed destination folder/variant, and source link when available.
+
+You then choose one of three simple outcomes:
+
+- **Import all**
+- **Import only selected EQs**
+- **Import all except selected EQs**
+
+You can reply naturally, for example:
+
+```text
+All
+Only 1, 3, and 4
+All except 2
+Everything except the Rtings profile
+```
+
+ChatGPT resolves your choice to exact OPRA EQ IDs and only then updates the config/build/Drive library.
+
+This step lets you verify both **what exists** and **what will actually be imported** before anything changes.
+
+### How the choices behave later
+
+If you choose **Import all**, normal routing continues to include future OPRA profiles that clearly match the configured product/variant rules.
+
+If you choose **Import only selected EQs**, the project normally stores the exact approved `include_eq_ids` with intentional partial mode. That selected set stays fixed until you change it; future profiles do not silently join it.
+
+If you choose **Import all except selected EQs**, the project records exact `exclude_eq_ids`. Those exact exclusions remain excluded, while future unrelated profiles can still be imported normally if they fit the existing route.
+
+The converter validates exact include/exclude IDs against OPRA. A typo or stale ID causes a build failure rather than silently changing your preference.
+
+## 9. Understand the completeness safeguard before customizing
+
+The project deliberately audits **every usable OPRA parametric EQ profile** for a configured logical product.
 
 This includes checking formatting-only OPRA product aliases. For example, if OPRA stores `Model X` and `Model-X` as separate records but their normalized names collide, the converter audits profiles across both records instead of trusting only the first one found.
 
-The build fails when a complete product has a profile that is not routed anywhere or when one profile is routed into multiple folders. This is intentional.
+For a normal complete product, every profile must be imported, duplicate-covered, or explicitly excluded by exact ID. The build fails if a remaining profile is not accounted for or when one profile is routed into multiple folders.
 
 A red coverage error usually means one of these things:
 
 - OPRA added a new profile;
 - a formatting-only alias contains additional profiles;
 - a new/changed variant does not fit the current folder rules;
-- a broad rule overlaps another variant rule.
+- a broad rule overlaps another variant rule;
+- an exact include/exclude ID is stale or mistyped.
 
-Do not bypass the error automatically. Inspect the profile first.
+Do not bypass the error automatically. Inspect the profile or exact selection first.
 
 If the intended folder is obvious from OPRA metadata, update the config. If the profile is ambiguous, ChatGPT should ask you what you want before assigning a folder.
 
-Only use `allow_partial: true` when you explicitly want a subset. For example, if you say "add only the red variant," a partial configuration is appropriate. It should not be used merely to hide missing profiles.
+Only use `allow_partial: true` when you explicitly want a subset. It should not be used merely to hide missing profiles.
 
-## 9. Customize the headphones in your fork
+`output/manifest.json` records exact exclusions as `explicitly_excluded_profiles`, so you can distinguish a profile you intentionally declined from one that was accidentally missed.
+
+## 10. Customize the headphones in your fork
 
 The fork initially contains the upstream project's configured headphones. Remove any you do not want and add your own.
 
@@ -179,26 +221,29 @@ For a normal addition, ChatGPT should:
 
 1. inspect OPRA and formatting-only aliases;
 2. inventory every usable parametric EQ;
-3. classify identifiable variants;
-4. ask you only when a profile cannot be classified safely;
-5. update `config/targets.json`;
-6. verify a green GitHub build with complete coverage;
-7. verify generated `preset_name` values begin with the expected model/variant;
-8. mirror the resulting XML files and root manifest into your Drive.
+3. classify identifiable variants without guessing;
+4. show you the complete candidate list with proposed UAPP names/folders;
+5. wait for your all/only/all-except approval;
+6. update `config/targets.json` to represent exactly what you approved;
+7. verify a green GitHub build with correct coverage/exclusion accounting;
+8. verify generated `preset_name` values begin with the expected model/variant;
+9. mirror the resulting XML files and root manifest into your Drive.
 
-See `docs/ADDING_HEADPHONES.md` for config details including `include_terms`, exact `include_eq_ids`, intentional `allow_partial` subsets, and the generated naming rule.
+See `docs/ADDING_HEADPHONES.md` for config details including `include_terms`, exact `include_eq_ids`, exact `exclude_eq_ids`, intentional `allow_partial` subsets, and the generated naming rule.
 
-## 10. What happens when OPRA changes later
+## 11. What happens when OPRA changes later
 
 The scheduled GitHub build re-runs coverage validation against the current OPRA feed.
 
 If OPRA adds a profile that your existing complete routing does not cover, the build turns red instead of silently dropping it or guessing a folder. When you ask ChatGPT to check the failure, it should inspect the new profile and either update an unambiguous rule or ask you for a classification choice.
 
-If the profile fits an existing route, it is generated automatically with the correct headphone-first preset name. No manual filename rule is needed.
+If the profile fits an existing complete/all-except route, it is generated automatically with the correct headphone-first preset name. An exact `exclude_eq_ids` choice excludes only the IDs you explicitly declined.
 
-This is a safety feature. It keeps your library complete without inventing metadata.
+If you chose a fixed exact-ID subset, newly added profiles remain outside that subset until you update your selection.
 
-## 11. Optional recurring Drive sync
+This is a safety feature. It keeps your library aligned with both OPRA and your explicit preferences without inventing metadata.
+
+## 12. Optional recurring Drive sync
 
 The GitHub Action updates the generated GitHub output automatically. Google Drive mirroring is a separate ChatGPT-connected workflow because the repository intentionally stores **no Google credentials**.
 
@@ -206,15 +251,16 @@ If your ChatGPT environment supports scheduled tasks with connected apps, create
 
 1. checks that the latest `Update OPRA presets` workflow on your fork succeeded;
 2. reads `config/targets.json` and `output/manifest.json` from your fork;
-3. confirms complete products have no unmatched profiles/errors;
-4. confirms `preset_name` values use the expected headphone/model prefix;
-5. compares the managed files with your private `OPRA UAPP Presets` folder;
-6. mirrors required additions/updates/renames/removals at the correct managed folder level;
-7. removes obsolete generated filenames so a rename does not leave duplicate presets in UAPP;
-8. updates the Drive root `manifest.json`;
-9. does nothing when Drive is already current.
+3. confirms complete products have no unexplained unmatched profiles/errors;
+4. accepts `explicitly_excluded_profiles` only when they match exact configured exclusions;
+5. confirms `preset_name` values use the expected headphone/model prefix;
+6. compares the managed files with your private `OPRA UAPP Presets` folder;
+7. mirrors required additions/updates/renames/removals at the correct managed folder level;
+8. removes obsolete generated filenames so a rename does not leave duplicate presets in UAPP;
+9. updates the Drive root `manifest.json`;
+10. does nothing when Drive is already current.
 
-The recurring task is only a safety net. When you add a headphone interactively, ChatGPT should sync the affected Drive files immediately when write actions are available.
+The recurring task is only a safety net. When you add a headphone interactively, ChatGPT should sync the affected Drive files immediately when write actions are available **after your EQ selection has been approved and the build has passed**.
 
 ## Privacy summary
 
@@ -223,4 +269,4 @@ The recurring task is only a safety net. When you add a headphone interactively,
 - Making or using a public fork does **not** make your Drive public.
 - Do not commit Google credentials, OAuth tokens, service-account files, or private Drive links/IDs to GitHub.
 - Each user connects ChatGPT separately to their own GitHub account/fork and their own Google account/Drive.
-- Profile/folder ambiguity should be resolved through explicit config/user choices, never through credentials or hidden external state.
+- Profile/folder ambiguity and EQ selection should be resolved through explicit config/user choices, never through credentials or hidden external state.
