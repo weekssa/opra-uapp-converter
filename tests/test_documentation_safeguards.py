@@ -14,6 +14,11 @@ class DocumentationSafeguardTests(unittest.TestCase):
             8000,
             "Paste-ready ChatGPT Project Instructions must remain below 8000 characters.",
         )
+        self.assertLess(
+            len(text.encode("utf-8")),
+            8000,
+            "Paste-ready instructions must also remain below 8000 UTF-8 bytes for margin/safety.",
+        )
         required = [
             "docs/CHATGPT_MAINTENANCE_RUNBOOK.md",
             "GitHub search is discovery-only",
