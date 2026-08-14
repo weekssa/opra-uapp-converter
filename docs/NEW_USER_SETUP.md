@@ -58,7 +58,7 @@ GitHub documentation:
 4. When GitHub asks which repositories ChatGPT can access, include your fork: `YOUR_GITHUB_USERNAME/opra-uapp-converter`.
 5. If GitHub is already connected, open the GitHub app in **Settings → Apps** and use **Choose repositories** or **Configure Repositories on GitHub** to add your fork.
 
-GitHub app capabilities can vary by ChatGPT plan/workspace. If repository write actions are available, authorize the fork so ChatGPT can maintain `config/targets.json` and related files for you. If your ChatGPT environment only provides read access, you can still use the GitHub web editor for the config changes described in `docs/ADDING_HEADPHONES.md`.
+GitHub app capabilities can vary by ChatGPT plan/workspace. If repository write actions are available, authorize the fork so ChatGPT can maintain `config/targets.json` and related project files for you. If your ChatGPT environment only provides read access, you can still use the GitHub web editor for the config changes described in `docs/ADDING_HEADPHONES.md`.
 
 OpenAI documentation:
 
@@ -98,7 +98,29 @@ The converter's managed paths are created underneath this root, for example:
 
 A model folder may contain presets directly and also contain variant subfolders. That is intentional. For example, the upstream configuration contains an unclassified EW300 measurement directly in `SIMGOT/EW300` plus Gold, Silver, and DSP child folders.
 
-## 6. Create a ChatGPT Project for your fork
+## 6. Understand how preset names appear in UAPP
+
+UAPP's preset picker shows the embedded preset name, but it does **not** show the Drive/GitHub folder path. The converter therefore puts the headphone first in every generated name.
+
+The format is:
+
+`Model [Variant] - Creator - Details`
+
+Examples:
+
+- `EW300 Gold - AutoEQ - Fahryst`
+- `EW300 DSP - AutoEQ - Jaytiss`
+- `EW300 - AutoEQ - Kazi`
+- `Edition XS - AutoEQ - Rtings`
+- `HD650 - oratory1990 - Harman Target`
+
+The model/variant prefix comes from the configured `output_path`, excluding the manufacturer component. That keeps names short enough for UAPP's narrow menu while still making the headphone obvious.
+
+Generated XML filenames and embedded preset names are kept identical. The manifest records the generated value as `preset_name`, while preserving OPRA's original author/details/source metadata separately.
+
+You should not need to rename XML files manually. New headphones inherit this behavior automatically when their config uses a clean `Manufacturer/Model` or `Manufacturer/Model/Variant` path.
+
+## 7. Create a ChatGPT Project for your fork
 
 Create a ChatGPT Project for this preset library and copy the instructions from:
 
@@ -122,9 +144,9 @@ Then test Drive access with:
 
 `Is Drive up to date?`
 
-ChatGPT should compare your fork's current manifest/output with **your** `OPRA UAPP Presets` folder.
+ChatGPT should compare your fork's current manifest/output with **your** `OPRA UAPP Presets` folder, including renamed or obsolete generated XML filenames.
 
-## 7. Understand the completeness safeguard before customizing
+## 8. Understand the completeness safeguard before customizing
 
 The project deliberately defaults to **bringing over every usable OPRA parametric EQ profile** for a configured logical product.
 
@@ -145,7 +167,7 @@ If the intended folder is obvious from OPRA metadata, update the config. If the 
 
 Only use `allow_partial: true` when you explicitly want a subset. For example, if you say "add only the red variant," a partial configuration is appropriate. It should not be used merely to hide missing profiles.
 
-## 8. Customize the headphones in your fork
+## 9. Customize the headphones in your fork
 
 The fork initially contains the upstream project's configured headphones. Remove any you do not want and add your own.
 
@@ -161,19 +183,22 @@ For a normal addition, ChatGPT should:
 4. ask you only when a profile cannot be classified safely;
 5. update `config/targets.json`;
 6. verify a green GitHub build with complete coverage;
-7. mirror the resulting XML files and root manifest into your Drive.
+7. verify generated `preset_name` values begin with the expected model/variant;
+8. mirror the resulting XML files and root manifest into your Drive.
 
-See `docs/ADDING_HEADPHONES.md` for config details including `include_terms`, exact `include_eq_ids`, and intentional `allow_partial` subsets.
+See `docs/ADDING_HEADPHONES.md` for config details including `include_terms`, exact `include_eq_ids`, intentional `allow_partial` subsets, and the generated naming rule.
 
-## 9. What happens when OPRA changes later
+## 10. What happens when OPRA changes later
 
 The scheduled GitHub build re-runs coverage validation against the current OPRA feed.
 
 If OPRA adds a profile that your existing complete routing does not cover, the build turns red instead of silently dropping it or guessing a folder. When you ask ChatGPT to check the failure, it should inspect the new profile and either update an unambiguous rule or ask you for a classification choice.
 
+If the profile fits an existing route, it is generated automatically with the correct headphone-first preset name. No manual filename rule is needed.
+
 This is a safety feature. It keeps your library complete without inventing metadata.
 
-## 10. Optional recurring Drive sync
+## 11. Optional recurring Drive sync
 
 The GitHub Action updates the generated GitHub output automatically. Google Drive mirroring is a separate ChatGPT-connected workflow because the repository intentionally stores **no Google credentials**.
 
@@ -182,10 +207,12 @@ If your ChatGPT environment supports scheduled tasks with connected apps, create
 1. checks that the latest `Update OPRA presets` workflow on your fork succeeded;
 2. reads `config/targets.json` and `output/manifest.json` from your fork;
 3. confirms complete products have no unmatched profiles/errors;
-4. compares the managed files with your private `OPRA UAPP Presets` folder;
-5. mirrors only the required additions/updates/removals at the correct managed folder level;
-6. updates the Drive root `manifest.json`;
-7. does nothing when Drive is already current.
+4. confirms `preset_name` values use the expected headphone/model prefix;
+5. compares the managed files with your private `OPRA UAPP Presets` folder;
+6. mirrors required additions/updates/renames/removals at the correct managed folder level;
+7. removes obsolete generated filenames so a rename does not leave duplicate presets in UAPP;
+8. updates the Drive root `manifest.json`;
+9. does nothing when Drive is already current.
 
 The recurring task is only a safety net. When you add a headphone interactively, ChatGPT should sync the affected Drive files immediately when write actions are available.
 
