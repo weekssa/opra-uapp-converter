@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 import json
 import math
 import re
+import shutil
 import sys
 import urllib.request
 from dataclasses import dataclass
@@ -182,12 +184,9 @@ def preset_display_name(eq: dict[str, Any]) -> str:
 def write_presets(source: str, config_path: Path, output_root: Path) -> dict[str, Any]:
     targets = load_config(config_path)
     vendors, products, eqs = index_database(read_jsonl(source))
-    output_root.mkdir(parents=True, exist_ok=True)
 
-    manifest_entries: list[dict[str, Any]] = []
-    errors: list[str] = []
+    candidates: list[tuple[Target, str, dict[str, Any], str, dict[str, Any]]] = []
     matched_counts = {target.output_path: 0 for target in targets}
-
     for eq_entry in eqs:
         eq_id = eq_entry["id"]
         eq = eq_entry["data"]
@@ -197,35 +196,55 @@ def write_presets(source: str, config_path: Path, output_root: Path) -> dict[str
         product = products.get(product_id)
         if not product:
             continue
-
         for target in targets:
-            if not target_matches(target, product, eq_id, eq):
-                continue
-            matched_counts[target.output_path] += 1
-            name = preset_display_name(eq)
+            if target_matches(target, product, eq_id, eq):
+                matched_counts[target.output_path] += 1
+                candidates.append((target, eq_id, eq, product_id, product))
+
+    if output_root.exists():
+        shutil.rmtree(output_root)
+    output_root.mkdir(parents=True, exist_ok=True)
+
+    name_counts = Counter((target.output_path, preset_display_name(eq)) for target, _, eq, _, _ in candidates)
+    used_paths: set[str] = set()
+    manifest_entries: list[dict[str, Any]] = []
+    errors: list[str] = []
+
+    for target, eq_id, eq, product_id, product in candidates:
+        try:
+            params = eq["parameters"]
+            bands = list(params.get("bands", []))
+            base_name = preset_display_name(eq)
+            name = base_name
+            if name_counts[(target.output_path, base_name)] > 1:
+                name = uapp_safe_name(f"{base_name} - {len(bands)} band")
             destination = output_root / target.output_path / f"{name}.xml"
+            if destination.as_posix().casefold() in used_paths:
+                short_id = eq_id.split("::")[-1]
+                name = uapp_safe_name(f"{name} - {short_id}")
+                destination = output_root / target.output_path / f"{name}.xml"
+            used_paths.add(destination.as_posix().casefold())
             destination.parent.mkdir(parents=True, exist_ok=True)
-            try:
-                params = eq["parameters"]
-                xml, warnings = build_xml(name, float(params.get("gain_db", 0.0)), list(params.get("bands", [])))
-                destination.write_text(xml, encoding="iso-8859-1")
-                vendor = vendors.get(target.vendor_id, {})
-                manifest_entries.append({
-                    "file": destination.relative_to(output_root).as_posix(),
-                    "opra_eq_id": eq_id,
-                    "opra_product_id": product_id,
-                    "vendor": vendor.get("name", target.vendor_id),
-                    "product": product.get("name", target.product_name),
-                    "author": eq.get("author"),
-                    "details": eq.get("details"),
-                    "source_link": eq.get("link"),
-                    "preamp_db": params.get("gain_db", 0.0),
-                    "opra_band_count": len(params.get("bands", [])),
-                    "uapp_band_count": min(len(params.get("bands", [])), MAX_BANDS),
-                    "warnings": warnings,
-                })
-            except (KeyError, TypeError, ValueError) as exc:
-                errors.append(f"{eq_id}: {exc}")
+
+            xml, warnings = build_xml(name, float(params.get("gain_db", 0.0)), bands)
+            destination.write_text(xml, encoding="iso-8859-1")
+            vendor = vendors.get(target.vendor_id, {})
+            manifest_entries.append({
+                "file": destination.relative_to(output_root).as_posix(),
+                "opra_eq_id": eq_id,
+                "opra_product_id": product_id,
+                "vendor": vendor.get("name", target.vendor_id),
+                "product": product.get("name", target.product_name),
+                "author": eq.get("author"),
+                "details": eq.get("details"),
+                "source_link": eq.get("link"),
+                "preamp_db": params.get("gain_db", 0.0),
+                "opra_band_count": len(bands),
+                "uapp_band_count": min(len(bands), MAX_BANDS),
+                "warnings": warnings,
+            })
+        except (KeyError, TypeError, ValueError) as exc:
+            errors.append(f"{eq_id}: {exc}")
 
     missing = [path for path, count in matched_counts.items() if count == 0]
     if missing:
