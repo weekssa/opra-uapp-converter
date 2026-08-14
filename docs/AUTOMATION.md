@@ -1,6 +1,25 @@
 # Automation architecture
 
-This project has two intentionally separate automation layers.
+This project has two intentionally separate automation layers, plus one required interactive approval checkpoint when a new headphone is added through ChatGPT.
+
+## New-headphone approval checkpoint
+
+A new-headphone request is intentionally a **two-stage workflow**:
+
+1. **Inventory and user approval** — ChatGPT inspects current OPRA, possible formatting-only aliases, every usable parametric EQ, proposed routing, and proposed UAPP-visible names. It shows the complete candidate list and waits for the user's import preference.
+2. **Configuration/build/sync** — only after approval does ChatGPT update `config/targets.json`, validate the GitHub build, inspect the manifest, and mirror the approved output to Drive.
+
+The user can choose:
+
+- **Import all**
+- **Import only selected EQs**
+- **Import all except selected EQs**
+
+The initial `Add [headphone]` request is not itself permission to silently import every profile.
+
+The candidate list should include a numbered entry for every usable OPRA parametric EQ with its proposed UAPP-visible name, creator/details, exact OPRA EQ ID, band count, proposed folder/variant, and source link when available.
+
+This human approval checkpoint and the converter's technical coverage checks solve different problems: the checkpoint confirms the user's preference, while the converter verifies that the approved preference was represented accurately and no unrelated profile disappeared accidentally.
 
 ## 1. OPRA → GitHub output
 
@@ -11,14 +30,34 @@ The workflow:
 1. Regenerates documentation from `config/targets.json`.
 2. Runs the converter tests.
 3. Downloads OPRA's supported `database_v1.jsonl` feed.
-4. Validates target matching, formatting-only product aliases, profile coverage, route exclusivity, and UAPP-visible preset naming.
+4. Validates target matching, exact include/exclude IDs, formatting-only product aliases, profile coverage, route exclusivity, and UAPP-visible preset naming.
 5. Generates the configured UAPP/ToneBoosters XML presets under `output/`.
 6. Uploads the generated output as a short-lived workflow artifact for debugging/recovery.
 7. Commits output/documentation only if the actual repository content changed.
 
 The generated output is deterministic, so unchanged OPRA data does not create a daily noise commit.
 
-`config/targets.json` defines which products/variants are managed and how each OPRA profile is routed.
+`config/targets.json` defines which products/variants are managed, which exact profiles are selected/excluded when applicable, and how each OPRA profile is routed.
+
+## Selection/exclusion guard
+
+The configuration supports three user-approved import styles.
+
+### Import all
+
+A normal target without selection filters imports every parametric EQ for that exact OPRA product record, subject to variant routing when multiple targets are required.
+
+### Import only selected EQs
+
+Use exact `include_eq_ids` plus `allow_partial: true` where practical. This creates a fixed approved subset: profiles outside the list remain non-imported until the user changes the selection.
+
+### Import all except selected EQs
+
+Use exact `exclude_eq_ids`. The excluded IDs are accounted for separately without disabling normal unmatched-profile detection.
+
+The converter validates every configured `include_eq_ids` and `exclude_eq_ids` entry against the current OPRA parametric EQ IDs for that exact target product. A stale or mistyped exact ID fails the build. The same EQ ID cannot be both included and excluded in one target.
+
+`output/manifest.json` reports exact user exclusions in `coverage[].explicitly_excluded_profiles`.
 
 ## UAPP-visible preset naming guard
 
@@ -58,19 +97,25 @@ The GitHub build is intentionally responsible for detecting profiles that would 
 
 For each configured logical product, the converter normalizes formatting-only differences in product names (spaces, punctuation, capitalization) and audits every OPRA `parametric_eq` profile across those possible aliases.
 
-A normal product is in **complete** mode. The build fails if a non-duplicate profile is not matched by any target.
+A normal product is in **complete** mode. Every OPRA parametric profile must be one of:
+
+- matched/imported;
+- a verified semantic duplicate of an imported profile;
+- explicitly excluded by exact EQ ID after user approval.
 
 An unmatched profile is accepted as duplicate-covered only when its author, details, type, preamp/filter parameters are semantically identical to an imported profile. Source-link differences are ignored for duplicate detection so the configuration can deliberately keep the richer-attributed copy.
 
+The build fails when a non-duplicate, non-excluded profile is not matched by any target in complete mode.
+
 The build also fails if a single OPRA profile matches multiple different `output_path` values. This prevents a broad root rule and a variant rule from silently duplicating the same preset into multiple folders.
 
-If a user explicitly requests only a subset of a logical product, a target can set:
+If a user explicitly requests only a fixed subset of a logical product, a target can set:
 
 ```json
 "allow_partial": true
 ```
 
-That changes the coverage report to `partial` and allows unmatched OPRA profiles. This setting must reflect a deliberate user request; it is not a generic workaround for a failed build.
+That changes the coverage report to `partial` and allows non-selected OPRA profiles. This setting must reflect a deliberate user choice; it is not a generic workaround for a failed build.
 
 `output/manifest.json` records coverage status for each logical product:
 
@@ -78,23 +123,28 @@ That changes the coverage report to `partial` and allows unmatched OPRA profiles
 - total OPRA parametric profile count across aliases;
 - matched profile count;
 - duplicate-covered profile count;
+- explicitly excluded profile IDs;
 - unmatched profile IDs.
 
 ### New OPRA profile behavior
 
 When OPRA adds a new profile to a configured complete product:
 
-- if an existing rule clearly matches it, it is generated normally with the standard headphone-first name;
+- if an existing rule clearly matches it and it is not explicitly excluded, it is generated normally with the standard headphone-first name;
 - if no rule matches it, the GitHub build fails;
 - if it would match multiple variant folders, the GitHub build fails.
 
-The maintenance workflow must inspect that new profile. If its intended folder is obvious from OPRA metadata, update config accordingly. If classification is ambiguous, ask the user what they want before changing folders or weakening validation.
+An `exclude_eq_ids` entry applies only to the exact ID the user excluded; it does not suppress future unrelated profiles.
+
+A fixed `include_eq_ids` + `allow_partial` selection behaves differently by design: newly added profiles stay outside that approved subset until the user changes it.
+
+The maintenance workflow must inspect any new coverage/routing failure. If its intended folder is obvious from OPRA metadata, update config accordingly. If classification is ambiguous, ask the user what they want before changing folders or weakening validation.
 
 This means ambiguity becomes a visible maintenance event instead of silent data loss or silent misclassification.
 
 ## Exact one-off routing
 
-`include_eq_ids` can route a known OPRA EQ ID exactly. It is preferable to a broad substring rule when one unclassified profile belongs directly in a model root while sibling profiles are split into variants.
+`include_eq_ids` can also route a known OPRA EQ ID exactly. It is preferable to a broad substring rule when one unclassified profile belongs directly in a model root while sibling profiles are split into variants.
 
 Current example:
 
@@ -170,15 +220,16 @@ The Drive sync:
 
 1. Confirms the latest GitHub `Update OPRA presets` workflow succeeded.
 2. Reads the current target config and manifest.
-3. Verifies the manifest has no errors/unexpected unmatched profiles for complete products.
-4. Verifies generated `preset_name` values use the expected headphone/model prefix.
-5. Creates missing managed Drive folders when needed.
-6. Adds new XML files.
-7. Replaces changed or renamed XML files.
-8. Removes obsolete generated XML files only within the applicable managed folder level.
-9. Updates the root `manifest.json`.
-10. Does not modify unrelated Drive content.
-11. Stays silent when GitHub and Drive are already in sync.
+3. Verifies the manifest has no errors or unexpected unmatched profiles for complete products.
+4. Treats `explicitly_excluded_profiles` as valid only when they correspond to exact configured user exclusions.
+5. Verifies generated `preset_name` values use the expected headphone/model prefix.
+6. Creates missing managed Drive folders when needed.
+7. Adds new XML files.
+8. Replaces changed or renamed XML files.
+9. Removes obsolete generated XML files only within the applicable managed folder level.
+10. Updates the root `manifest.json`.
+11. Does not modify unrelated Drive content.
+12. Stays silent when GitHub and Drive are already in sync.
 
 `output/manifest.json` is the source of truth for which generated preset files should exist and what UAPP should display for each preset.
 
@@ -200,13 +251,13 @@ See `docs/NEW_USER_SETUP.md` for the user-facing setup steps.
 
 ## What happens when you add a headphone
 
-For a normal addition, only `config/targets.json` should need to change.
+For a normal addition, only `config/targets.json` should need to change **after user approval**.
 
-Before that change is made, the maintenance workflow inventories all OPRA profiles and possible formatting-only aliases. The config change then triggers GitHub Actions. Once the output is rebuilt successfully with complete/intentional-partial coverage and correct headphone-first `preset_name` values, the connected ChatGPT workflow mirrors the resulting XML files and root manifest into that user's Drive.
+Before that change is made, the maintenance workflow inventories all OPRA profiles and possible formatting-only aliases, proposes the UAPP names/folders, and asks the user to approve all/some/all-except. The config change then represents that exact decision and triggers GitHub Actions. Once the output is rebuilt successfully with correct coverage/exclusion accounting and headphone-first `preset_name` values, the connected ChatGPT workflow mirrors the resulting XML files and root manifest into that user's Drive.
 
 See:
 
-- `docs/ADDING_HEADPHONES.md` for manual instructions and config fields.
+- `docs/ADDING_HEADPHONES.md` for manual instructions, approval examples, and config fields.
 - `docs/CHATGPT_PROJECT_INSTRUCTIONS.md` for the AI-assisted workflow.
 - `docs/NEW_USER_SETUP.md` for setting up a fork and private Drive from scratch.
 
@@ -217,16 +268,18 @@ The system is intentionally conservative.
 A GitHub build fails rather than silently producing incorrect/incomplete output when, for example:
 
 - a configured target matches no OPRA parametric EQ entries;
-- a complete logical product has an unmatched OPRA parametric profile;
+- a configured exact include/exclude EQ ID does not exist for that exact OPRA product;
+- the same exact EQ ID is both included and excluded in one target;
+- a complete logical product has an unexplained unmatched OPRA parametric profile;
 - one OPRA profile matches multiple output folders;
 - an OPRA target contains a filter type the converter cannot map safely;
 - a value falls outside the supported ToneBoosters conversion range.
 
-When a coverage/routing failure requires a classification choice, the correct response is to inspect OPRA and ask the user if necessary. Do not add `allow_partial`, broaden filters, or invent a variant just to make the workflow green.
+When a coverage/routing/selection failure requires a choice, the correct response is to inspect OPRA and ask the user if necessary. Do not add `allow_partial`, broaden filters, invent exclusions, or invent a variant just to make the workflow green.
 
 A preset-naming regression is also a release blocker: generated names must keep the headphone/model first so UAPP users can identify the preset without seeing its folder.
 
-The Drive sync must not mirror a failed/partial build that was not intentionally configured. It first confirms that the latest GitHub workflow completed successfully.
+The Drive sync must not mirror a failed or unexpectedly incomplete build. It first confirms that the latest GitHub workflow completed successfully and that manifest exclusions/partial mode match intentional config.
 
 ## Credential safety
 
