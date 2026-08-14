@@ -25,6 +25,12 @@
     {
       "vendor_id": "sennheiser",
       "product_name": "HD 650",
+      "include_terms": ["autoeq"],
+      "output_path": "Sennheiser/HD650"
+    },
+    {
+      "vendor_id": "sennheiser",
+      "product_name": "HD650",
       "output_path": "Sennheiser/HD650"
     }
   ]
