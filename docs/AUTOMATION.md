@@ -1,6 +1,6 @@
 # Automation architecture
 
-This project has two automation layers.
+This project has two intentionally separate automation layers.
 
 ## 1. OPRA → GitHub output
 
@@ -18,20 +18,44 @@ The generated output is deterministic, so unchanged OPRA data does not create a 
 
 `config/targets.json` defines which products/variants are managed.
 
+### Fork behavior
+
+When this repository is public, another user can fork it and run the same GitHub automation in their own repository.
+
+GitHub disables workflows in a new public fork until the fork owner enables GitHub Actions. Scheduled workflows are also disabled by default on public forks. A fork owner should enable Actions, enable `Update OPRA presets` if necessary, and run it once manually before relying on the daily schedule.
+
+The workflow contains:
+
+```yaml
+permissions:
+  contents: write
+```
+
+That is the repository permission required for the workflow to commit regenerated presets/documentation back to the fork. The project does not require a Google credential, GitHub personal access token, or other external secret in GitHub Actions.
+
 ## 2. GitHub output → Google Drive
 
-A recurring ChatGPT scheduled task uses the connected GitHub and Google Drive accounts to mirror the repository's current generated output into:
+Google Drive mirroring is deliberately **not** performed by GitHub Actions.
+
+A ChatGPT task uses that user's connected GitHub and Google Drive accounts to mirror the repository's current generated output into a private Drive folder named:
 
 `OPRA UAPP Presets`
 
-The sync is **config-driven**.
+This separation is a security feature:
+
+- no Google OAuth token is stored in GitHub;
+- no Google service-account key is committed to the repository;
+- a public GitHub fork does not grant anyone access to the user's Drive;
+- each user authorizes ChatGPT separately to their own GitHub fork and their own Google account.
+
+The Drive sync is **config-driven**.
 
 It reads:
 
 - `config/targets.json`
 - `output/manifest.json`
 
-Every `output_path` in `config/targets.json` becomes a managed relative path underneath the Drive root.
+Every `output_path` in `config/targets.json` becomes a managed relative path underneath the connected user's Drive root.
 
 Example:
 
@@ -57,22 +81,39 @@ The Drive sync:
 4. Adds new XML files.
 5. Replaces changed XML files.
 6. Removes obsolete XML files only within configured managed folders.
-7. Updates the root `manifest.json`.
+7. Updates the root `manifest.json` when the sync implementation manages that file.
 8. Does not modify unrelated Drive content.
 9. Stays silent when GitHub and Drive are already in sync.
 
 `output/manifest.json` is the source of truth for which generated preset files should exist.
 
+## ChatGPT app permissions
+
+For automated maintenance, the user needs two separate ChatGPT app connections:
+
+### GitHub
+
+The GitHub app must be authorized to access the user's repository/fork. When repository write actions are available in that ChatGPT plan/workspace, they allow ChatGPT to maintain `config/targets.json` and related files directly.
+
+### Google Drive
+
+The Google Drive app must have the Drive actions needed to create folders and upload/update files. A read-only or sync-only connection is not sufficient for automatic mirroring.
+
+The Drive folder itself may remain private. It does not need to be shared with GitHub or the upstream project owner.
+
+See `docs/NEW_USER_SETUP.md` for the user-facing setup steps.
+
 ## What happens when you add a headphone
 
 For a normal addition, only `config/targets.json` changes.
 
-That config change triggers GitHub Actions immediately. Once the output is rebuilt successfully, the recurring Drive sync discovers the new `output_path` from the config and mirrors the new XML files into Drive.
+That config change triggers GitHub Actions immediately. Once the output is rebuilt successfully, the connected ChatGPT workflow discovers the new `output_path` from the config and mirrors the new XML files into that user's Drive.
 
 See:
 
 - `docs/ADDING_HEADPHONES.md` for manual instructions.
 - `docs/CHATGPT_PROJECT_INSTRUCTIONS.md` for the AI-assisted workflow.
+- `docs/NEW_USER_SETUP.md` for setting up a fork and private Drive from scratch.
 
 ## Failure behavior
 
@@ -85,3 +126,16 @@ A GitHub build fails rather than silently producing incorrect output when, for e
 - a value falls outside the supported ToneBoosters conversion range.
 
 The Drive sync should not mirror a failed/partial build. It first confirms that the latest GitHub workflow completed successfully.
+
+## Credential safety
+
+Never commit any of the following to the repository:
+
+- Google OAuth tokens;
+- Google service-account JSON files;
+- GitHub personal access tokens;
+- ChatGPT credentials;
+- `.env` files containing secrets;
+- private keys.
+
+The repository `.gitignore` excludes common local credential filenames as an additional guardrail, but users remain responsible for keeping secrets out of Git history.
