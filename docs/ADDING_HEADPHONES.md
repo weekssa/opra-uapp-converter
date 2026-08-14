@@ -17,13 +17,15 @@ In the ChatGPT Project for this repository, use a request like:
 ChatGPT should:
 
 1. Inspect OPRA for the exact product.
-2. Confirm that OPRA actually has parametric EQ data for it.
-3. Read the current `config/targets.json` first.
-4. Add the smallest necessary config entry or entries.
-5. Let GitHub Actions rebuild the preset library.
-6. Verify the workflow succeeded and inspect `output/manifest.json`.
-7. If Google Drive write actions are connected, immediately create/mirror the new Drive folder/files.
-8. Leave the recurring Drive sync as a safety net for later OPRA changes.
+2. Check the same vendor for near-duplicate product records whose names differ only by spaces, punctuation, hyphens, capitalization, or similar formatting, and compare their available parametric EQ profiles before choosing one.
+3. Confirm that OPRA actually has parametric EQ data for the selected record.
+4. Read the current `config/targets.json` first.
+5. Add the smallest necessary config entry or entries.
+6. Let GitHub Actions rebuild the preset library.
+7. Verify the workflow succeeded and inspect `output/manifest.json`.
+8. Confirm the generated preset count matches the usable parametric EQ profiles expected from the selected OPRA record (or the expected filtered subset when variants are intentionally filtered).
+9. If Google Drive write actions are connected, immediately create/mirror the new Drive folder/files and update the Drive root `manifest.json`.
+10. Leave the recurring Drive sync as a safety net for later OPRA changes.
 
 If OPRA does not contain a usable parametric EQ for the headphone, ChatGPT should tell you instead of inventing one.
 
@@ -52,6 +54,14 @@ Example for the existing Edition XS target:
 
 - Vendor folder: `hifiman`
 - Product name: `Edition XS`
+
+### Important: check for near-duplicate OPRA product records
+
+Do not stop after finding the first similar-looking product name. OPRA can contain separate records whose names differ only by formatting such as spaces or punctuation.
+
+For example, OPRA currently contains both `HD650` and `HD 650` under Sennheiser, and they do not expose the same EQ profile set. Before choosing a `product_name`, inspect every near-identical candidate's `eq/` directory and compare the available parametric EQ profiles.
+
+If you cannot tell which candidate represents the requested headphone, do not guess.
 
 ## 2. Edit `config/targets.json`
 
@@ -137,6 +147,8 @@ Search for your headphone. The manifest shows:
 - UAPP band count
 - conversion warnings
 
+Before considering the addition complete, compare the number of generated files for that target with the number of usable parametric EQ profiles you found in the selected OPRA product. If the counts do not match, investigate the discrepancy before syncing Drive.
+
 ## 6. Google Drive sync
 
 GitHub does not receive your Google credentials and does not directly write to Drive.
@@ -153,7 +165,7 @@ becomes:
 
 `Google Drive / OPRA UAPP Presets / FiiO / FT1 /`
 
-The sync creates missing folders, adds/updates the generated XML files, and removes obsolete XML files only from folders managed by this project.
+The sync creates missing folders, adds/updates the generated XML files, removes obsolete XML files only from folders managed by this project, and updates the root `manifest.json`.
 
 Your Drive folder does not need to be public or shared with GitHub.
 
@@ -166,6 +178,8 @@ GitHub Actions will regenerate the output without that target. The Drive sync wi
 ## Important rules
 
 - Never invent OPRA product names or vendor ids.
+- Always check for near-duplicate OPRA product records before selecting a target.
+- Verify the expected OPRA parametric profile count against the generated manifest before declaring an addition successful.
 - Never manually edit generated XML files as the normal workflow.
 - Generated files under `output/` should come from the converter.
 - Preserve OPRA and individual EQ creator attribution.
