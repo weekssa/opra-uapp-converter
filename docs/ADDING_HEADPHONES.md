@@ -25,9 +25,10 @@ ChatGPT should:
 7. Read the current `config/targets.json` first and add the smallest necessary target entries.
 8. Let GitHub Actions rebuild the preset library.
 9. Verify the workflow succeeded and inspect both the generated presets and the manifest `coverage` section.
-10. Confirm there are no unexplained unmatched profiles or overlapping routes.
-11. If Google Drive write actions are connected, immediately mirror the new/changed Drive files and update the Drive root `manifest.json`.
-12. Leave the recurring Drive sync as a safety net for later OPRA changes.
+10. Verify each generated `preset_name` starts with the expected headphone/model and variant and follows the standard UAPP-visible naming format.
+11. Confirm there are no unexplained unmatched profiles or overlapping routes.
+12. If Google Drive write actions are connected, immediately mirror the new/changed Drive files and update the Drive root `manifest.json`.
+13. Leave the recurring Drive sync as a safety net for later OPRA changes.
 
 If OPRA does not contain a usable parametric EQ for the headphone, ChatGPT should tell you instead of inventing one.
 
@@ -147,12 +148,52 @@ Use `allow_partial` only for a deliberate subset request. Do **not** add it mere
 
 - `vendor_id`: exact OPRA vendor id.
 - `product_name`: exact OPRA product name for this target entry.
-- `output_path`: relative GitHub/Drive folder.
+- `output_path`: relative GitHub/Drive folder and source of the UAPP-visible model/variant prefix.
 - `include_terms`: optional case-insensitive substring filters against OPRA EQ id, author, and details.
 - `include_eq_ids`: optional exact OPRA EQ IDs for precise routing.
 - `allow_partial`: optional boolean. Default `false`; when `true`, unmatched profiles for that logical product are allowed because the user intentionally requested a subset.
 
-## 4. Understand the automatic coverage checks
+## 4. Understand UAPP-visible preset naming
+
+UAPP does not show the source folder in its preset picker, so the converter puts the headphone first in every generated preset name.
+
+The standard format is:
+
+```text
+Model [Variant] - Creator - Details
+```
+
+Examples:
+
+```text
+EW300 Gold - AutoEQ - Fahryst
+EW300 Silver - AutoEQ - Fahryst
+EW300 DSP - AutoEQ - Jaytiss
+EW300 - AutoEQ - Kazi
+Edition XS - AutoEQ - Rtings
+HD650 - oratory1990 - Harman Target
+```
+
+The prefix comes from `output_path` with the first manufacturer component removed:
+
+- `HIFIMAN/Edition XS` → `Edition XS`
+- `SIMGOT/EW300` → `EW300`
+- `SIMGOT/EW300/Gold` → `EW300 Gold`
+- `SIMGOT/EW300/DSP` → `EW300 DSP`
+
+The converter uses that same generated string for both the XML filename and the embedded ToneBoosters preset `Name`.
+
+For readability, display-only details may remove a leading `Measured by ` and may remove a trailing parenthetical variant when it simply repeats the configured variant. For example, OPRA author/details `AutoEQ` + `Measured by Fahryst (gold)` become:
+
+```text
+EW300 Gold - AutoEQ - Fahryst
+```
+
+This cleanup is **display only**. The original OPRA `author` and `details` remain unchanged in `output/manifest.json`, along with the new generated `preset_name` field.
+
+Do not add manual filename overrides for normal headphones. Choose a clean `output_path`; the converter should generate the UAPP-visible name automatically.
+
+## 5. Understand the automatic coverage checks
 
 For every configured logical product, the converter:
 
@@ -165,14 +206,14 @@ For every configured logical product, the converter:
 
 This safeguard is what prevents the original `HD650` / `HD 650` type of omission from happening silently again.
 
-## 5. Save the config and check the build
+## 6. Save the config and check the build
 
 When `config/targets.json` changes on `main`, the `Update OPRA presets` GitHub Action runs automatically after Actions has been enabled for that repository/fork.
 
 It will:
 
 1. regenerate documentation;
-2. run converter tests;
+2. run converter tests, including the headphone-first preset-name tests;
 3. download the current OPRA database;
 4. validate target matching, logical-product coverage, duplicate aliases, and overlapping routes;
 5. generate the XML library;
@@ -180,9 +221,16 @@ It will:
 
 A red coverage failure is a request for classification, not permission to weaken the validation.
 
-## 6. Inspect `output/manifest.json`
+## 7. Inspect `output/manifest.json`
 
 The manifest shows per-preset metadata plus a top-level `coverage` section.
+
+For each generated preset, verify:
+
+- `file`: generated path/filename;
+- `preset_name`: exact name UAPP will show;
+- `author` and `details`: original OPRA values, unchanged;
+- OPRA EQ/product IDs and source attribution.
 
 For each logical product, check:
 
@@ -192,9 +240,9 @@ For each logical product, check:
 - `duplicate_profiles_covered`;
 - `unmatched_profiles`.
 
-For a normal complete addition, `unmatched_profiles` must be empty.
+For a normal complete addition, `unmatched_profiles` must be empty. Also verify the generated `preset_name` begins with the expected model/variant rather than only the creator name.
 
-## 7. Google Drive sync
+## 8. Google Drive sync
 
 GitHub does not receive your Google credentials and does not directly write to Drive.
 
@@ -208,13 +256,15 @@ A model root can contain XML files directly while also containing managed varian
 OPRA UAPP Presets/
 └── SIMGOT/
     └── EW300/
-        ├── AutoEQ - Measured by Kazi.xml
+        ├── EW300 - AutoEQ - Kazi.xml
         ├── Gold/
         ├── Silver/
         └── DSP/
 ```
 
 The sync adds/updates generated XML files, removes obsolete generated XML files only within managed locations, preserves unrelated Drive content, and updates the root `manifest.json`.
+
+When naming behavior changes, treat the old filename as obsolete generated output and the new headphone-first filename as its replacement. Do not leave both versions in Drive.
 
 ## Removing a headphone
 
@@ -231,7 +281,9 @@ If multiple entries represent aliases or variants of one model, remove the whole
 - Use exact `include_eq_ids` for one-off routing when that is safer than a broad text filter.
 - Use `allow_partial` only when the user explicitly requests a subset.
 - Never weaken coverage validation merely to make a build green.
-- Never manually edit generated XML files as the normal workflow.
+- Keep the UAPP-visible naming rule `Model [Variant] - Creator - Details`; do not regress to creator-only names.
+- Preserve original OPRA author/details/source metadata even when display-only naming removes redundant wording.
+- Never manually edit or rename generated XML files as the normal workflow.
 - Preserve OPRA and individual EQ creator attribution.
 - Do not silently drop unsupported filter types.
 - UAPP/ToneBoosters is limited to 10 bands in this converter. If OPRA provides more, OPRA's priority order is used and the manifest records a warning.
