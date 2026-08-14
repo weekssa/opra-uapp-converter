@@ -8,15 +8,74 @@ GitHub Actions runs `.github/workflows/update-presets.yml` once per day and on r
 
 The workflow:
 
-1. Runs the converter tests.
-2. Downloads OPRA's supported `database_v1.jsonl` feed.
-3. Generates the configured UAPP/ToneBoosters XML presets under `output/`.
-4. Uploads the generated output as a short-lived workflow artifact for debugging/recovery.
-5. Commits the output only if the actual preset library changed.
+1. Regenerates documentation from `config/targets.json`.
+2. Runs the converter tests.
+3. Downloads OPRA's supported `database_v1.jsonl` feed.
+4. Validates target matching, formatting-only product aliases, profile coverage, and route exclusivity.
+5. Generates the configured UAPP/ToneBoosters XML presets under `output/`.
+6. Uploads the generated output as a short-lived workflow artifact for debugging/recovery.
+7. Commits output/documentation only if the actual repository content changed.
 
 The generated output is deterministic, so unchanged OPRA data does not create a daily noise commit.
 
-`config/targets.json` defines which products/variants are managed.
+`config/targets.json` defines which products/variants are managed and how each OPRA profile is routed.
+
+## Completeness guard
+
+The GitHub build is intentionally responsible for detecting profiles that would otherwise be missed silently.
+
+For each configured logical product, the converter normalizes formatting-only differences in product names (spaces, punctuation, capitalization) and audits every OPRA `parametric_eq` profile across those possible aliases.
+
+A normal product is in **complete** mode. The build fails if a non-duplicate profile is not matched by any target.
+
+An unmatched profile is accepted as duplicate-covered only when its author, details, type, preamp/filter parameters are semantically identical to an imported profile. Source-link differences are ignored for duplicate detection so the configuration can deliberately keep the richer-attributed copy.
+
+The build also fails if a single OPRA profile matches multiple different `output_path` values. This prevents a broad root rule and a variant rule from silently duplicating the same preset into multiple folders.
+
+If a user explicitly requests only a subset of a logical product, a target can set:
+
+```json
+"allow_partial": true
+```
+
+That changes the coverage report to `partial` and allows unmatched OPRA profiles. This setting must reflect a deliberate user request; it is not a generic workaround for a failed build.
+
+`output/manifest.json` records coverage status for each logical product:
+
+- complete/partial mode;
+- total OPRA parametric profile count across aliases;
+- matched profile count;
+- duplicate-covered profile count;
+- unmatched profile IDs.
+
+### New OPRA profile behavior
+
+When OPRA adds a new profile to a configured complete product:
+
+- if an existing rule clearly matches it, it is generated normally;
+- if no rule matches it, the GitHub build fails;
+- if it would match multiple variant folders, the GitHub build fails.
+
+The maintenance workflow must inspect that new profile. If its intended folder is obvious from OPRA metadata, update config accordingly. If classification is ambiguous, ask the user what they want before changing folders or weakening validation.
+
+This means ambiguity becomes a visible maintenance event instead of silent data loss or silent misclassification.
+
+## Exact one-off routing
+
+`include_eq_ids` can route a known OPRA EQ ID exactly. It is preferable to a broad substring rule when one unclassified profile belongs directly in a model root while sibling profiles are split into variants.
+
+Current example:
+
+```json
+{
+  "vendor_id": "simgot_audio",
+  "product_name": "EW300",
+  "include_eq_ids": ["simgot_audio:ew300::autoeq_kazi"],
+  "output_path": "SIMGOT/EW300"
+}
+```
+
+Gold and Silver are routed separately. If another unclassified EW300 profile appears later, complete-coverage validation stops the build until that new profile is deliberately classified.
 
 ### Fork behavior
 
@@ -57,19 +116,19 @@ It reads:
 
 Every `output_path` in `config/targets.json` becomes a managed relative path underneath the connected user's Drive root.
 
-Example:
+A model root may itself contain generated XML files while also containing variant subfolders. For example:
 
-```json
-{
-  "vendor_id": "hifiman",
-  "product_name": "Edition XS",
-  "output_path": "HIFIMAN/Edition XS"
-}
+```text
+OPRA UAPP Presets/
+└── SIMGOT/
+    └── EW300/
+        ├── AutoEQ - Measured by Kazi.xml
+        ├── Gold/
+        ├── Silver/
+        └── DSP/
 ```
 
-maps to:
-
-`Google Drive / OPRA UAPP Presets / HIFIMAN / Edition XS`
+The root target manages generated XML files directly in `EW300`; the variant targets manage their own child folders. Drive synchronization must preserve unrelated content and must not treat a parent managed path as permission to recursively delete unrelated child folders.
 
 When a new target is added, the Drive sync can create missing destination folders automatically. No separate hard-coded folder list needs to be maintained.
 
@@ -77,19 +136,20 @@ The Drive sync:
 
 1. Confirms the latest GitHub `Update OPRA presets` workflow succeeded.
 2. Reads the current target config and manifest.
-3. Creates missing managed Drive folders when needed.
-4. Adds new XML files.
-5. Replaces changed XML files.
-6. Removes obsolete XML files only within configured managed folders.
-7. Updates the root `manifest.json` when the sync implementation manages that file.
-8. Does not modify unrelated Drive content.
-9. Stays silent when GitHub and Drive are already in sync.
+3. Verifies the manifest has no errors/unexpected unmatched profiles for complete products.
+4. Creates missing managed Drive folders when needed.
+5. Adds new XML files.
+6. Replaces changed XML files.
+7. Removes obsolete generated XML files only within the applicable managed folder level.
+8. Updates the root `manifest.json`.
+9. Does not modify unrelated Drive content.
+10. Stays silent when GitHub and Drive are already in sync.
 
 `output/manifest.json` is the source of truth for which generated preset files should exist.
 
 ## ChatGPT app permissions
 
-For automated maintenance, the user needs two separate ChatGPT app connections:
+For automated maintenance, the user needs two separate ChatGPT app connections.
 
 ### GitHub
 
@@ -105,13 +165,13 @@ See `docs/NEW_USER_SETUP.md` for the user-facing setup steps.
 
 ## What happens when you add a headphone
 
-For a normal addition, only `config/targets.json` changes.
+For a normal addition, only `config/targets.json` should need to change.
 
-That config change triggers GitHub Actions immediately. Once the output is rebuilt successfully, the connected ChatGPT workflow discovers the new `output_path` from the config and mirrors the new XML files into that user's Drive.
+Before that change is made, the maintenance workflow inventories all OPRA profiles and possible formatting-only aliases. The config change then triggers GitHub Actions. Once the output is rebuilt successfully with complete/intentional-partial coverage, the connected ChatGPT workflow mirrors the resulting XML files and root manifest into that user's Drive.
 
 See:
 
-- `docs/ADDING_HEADPHONES.md` for manual instructions.
+- `docs/ADDING_HEADPHONES.md` for manual instructions and config fields.
 - `docs/CHATGPT_PROJECT_INSTRUCTIONS.md` for the AI-assisted workflow.
 - `docs/NEW_USER_SETUP.md` for setting up a fork and private Drive from scratch.
 
@@ -119,13 +179,17 @@ See:
 
 The system is intentionally conservative.
 
-A GitHub build fails rather than silently producing incorrect output when, for example:
+A GitHub build fails rather than silently producing incorrect/incomplete output when, for example:
 
 - a configured target matches no OPRA parametric EQ entries;
+- a complete logical product has an unmatched OPRA parametric profile;
+- one OPRA profile matches multiple output folders;
 - an OPRA target contains a filter type the converter cannot map safely;
 - a value falls outside the supported ToneBoosters conversion range.
 
-The Drive sync should not mirror a failed/partial build. It first confirms that the latest GitHub workflow completed successfully.
+When a coverage/routing failure requires a classification choice, the correct response is to inspect OPRA and ask the user if necessary. Do not add `allow_partial`, broaden filters, or invent a variant just to make the workflow green.
+
+The Drive sync must not mirror a failed/partial build that was not intentionally configured. It first confirms that the latest GitHub workflow completed successfully.
 
 ## Credential safety
 
