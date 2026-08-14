@@ -1,7 +1,7 @@
 {
   "opra_source": "https://opra.roonlabs.net/database_v1.jsonl",
   "opra_attribution": "EQ data from the OPRA project (CC BY-SA 4.0). Preset creators are credited per file in this manifest.",
-  "preset_count": 27,
+  "preset_count": 30,
   "presets": [
     {
       "file": "HIFIMAN/Edition XS/AutoEQ - Measured by Kuulokenurkka.xml",
@@ -239,6 +239,48 @@
       "preamp_db": -4,
       "opra_band_count": 5,
       "uapp_band_count": 5,
+      "warnings": []
+    },
+    {
+      "file": "Sennheiser/HD650/oratory1990 - Harman Target - 10 band graphic EQ.xml",
+      "opra_eq_id": "sennheiser:hd650::oratory1990_harman_target_10_band_graphic_eq",
+      "opra_product_id": "sennheiser::hd650",
+      "vendor": "Sennheiser",
+      "product": "HD650",
+      "author": "oratory1990",
+      "details": "Harman Target • 10 band graphic EQ",
+      "source_link": "https://www.dropbox.com/s/gwxt4qup0o6udvz/Sennheiser%20HD650%20%2810%20Band%20Graphic%20EQ%29.pdf?dl=0",
+      "preamp_db": -8.6,
+      "opra_band_count": 10,
+      "uapp_band_count": 10,
+      "warnings": []
+    },
+    {
+      "file": "Sennheiser/HD650/oratory1990 - Harman Target - 6 Band EQ.xml",
+      "opra_eq_id": "sennheiser:hd650::oratory1990_harman_target_6_band_eq",
+      "opra_product_id": "sennheiser::hd650",
+      "vendor": "Sennheiser",
+      "product": "HD650",
+      "author": "oratory1990",
+      "details": "Harman Target • 6 Band EQ",
+      "source_link": "https://www.dropbox.com/s/p3hcne1z7n965sx/Sennheiser%20HD650%20%286%20Band%20EQ%29.pdf?dl=0",
+      "preamp_db": -8.5,
+      "opra_band_count": 6,
+      "uapp_band_count": 6,
+      "warnings": []
+    },
+    {
+      "file": "Sennheiser/HD650/oratory1990 - Harman Target.xml",
+      "opra_eq_id": "sennheiser:hd650::oratory1990_harman_target",
+      "opra_product_id": "sennheiser::hd650",
+      "vendor": "Sennheiser",
+      "product": "HD650",
+      "author": "oratory1990",
+      "details": "Harman Target",
+      "source_link": "https://www.dropbox.com/s/qs4hs92tvfbwr04/Sennheiser%20HD650.pdf?dl=0",
+      "preamp_db": -9.3,
+      "opra_band_count": 10,
+      "uapp_band_count": 10,
       "warnings": []
     },
     {
