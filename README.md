@@ -54,9 +54,9 @@ The intended workflow is:
 1. ChatGPT checks current OPRA data for the exact headphone, formatting-only product aliases, available parametric EQ profiles, and identifiable variants.
 2. Every usable OPRA parametric profile is accounted for by the proposed routing. If a profile cannot be classified confidently, ChatGPT asks which folder/subset you want instead of guessing.
 3. ChatGPT updates `config/targets.json`.
-4. GitHub Actions automatically rebuilds and validates the XML library, including profile-coverage and overlapping-route checks.
+4. GitHub Actions automatically rebuilds and validates the XML library, including profile-coverage, route-exclusivity, and preset-naming checks.
 5. GitHub Actions refreshes the README supported-headphones list and generated project description from the config.
-6. ChatGPT verifies the generated manifest and, when Drive write access is available, immediately syncs the new/changed XML files into the matching folder under `Google Drive / OPRA UAPP Presets`.
+6. ChatGPT verifies the generated manifest and UAPP-visible preset names and, when Drive write access is available, immediately syncs the new/changed XML files into the matching folder under `Google Drive / OPRA UAPP Presets`.
 7. The recurring Drive sync remains a safety net for later OPRA changes.
 8. You access the XML from Drive and import it into UAPP.
 
@@ -67,6 +67,35 @@ The reusable Project Instructions are stored here:
 For manual additions, including copy/paste JSON examples:
 
 [`docs/ADDING_HEADPHONES.md`](docs/ADDING_HEADPHONES.md)
+
+## UAPP-visible preset naming
+
+UAPP's preset picker shows the preset's embedded ToneBoosters `Name`, but it does not show the folder that the XML came from. Presets therefore use a **headphone-first** name so the model is visible in the picker.
+
+The standard format is:
+
+```text
+Model [Variant] - Creator - Details
+```
+
+Examples:
+
+```text
+EW300 Gold - AutoEQ - Fahryst
+EW300 Silver - AutoEQ - Fahryst
+EW300 DSP - AutoEQ - Jaytiss
+EW300 - AutoEQ - Kazi
+Edition XS - AutoEQ - Rtings
+HD650 - oratory1990 - Harman Target
+```
+
+The model/variant prefix is derived from `output_path`: the manufacturer folder is omitted to save space in UAPP's narrow menu, while the model and any variant folders are retained. For example, `SIMGOT/EW300/Gold` becomes `EW300 Gold`.
+
+For display only, redundant wording is compacted when it is safe to do so. A leading `Measured by ` is removed from OPRA details, and a trailing parenthetical variant such as `(gold)` is removed when the same variant is already present in the model prefix. **Original OPRA author/details are never changed in the manifest.**
+
+The XML filename and the embedded ToneBoosters `PresetInfo Name` use the same generated name. `output/manifest.json` also records that value as `preset_name`, alongside the untouched OPRA `author`, `details`, IDs, and source attribution.
+
+This naming rule is converter-level behavior. Do not manually rename generated XML files to solve UAPP display problems.
 
 ## Completeness and routing safeguards
 
@@ -92,12 +121,13 @@ For a known one-off profile that belongs in a root model folder while sibling pr
 1. Downloads OPRA's supported `database_v1.jsonl` feed.
 2. Matches configured headphones using exact OPRA vendor/product metadata and explicit routing rules.
 3. Audits formatting-only product aliases and validates that profiles are completely and unambiguously routed unless an intentional partial import is configured.
-4. Converts OPRA preamp, frequency, gain, Q, and supported filter types into ToneBoosters' normalized preset representation.
-5. Writes UAPP-compatible `.xml` files under `output/`.
-6. Writes `output/manifest.json` with OPRA IDs, creator attribution, source links, source band counts, coverage status, and any conversion warnings.
-7. Regenerates the README supported-headphones section and project-description text from `config/targets.json`.
-8. GitHub Actions runs the converter daily and whenever converter/config/test files change.
-9. A scheduled ChatGPT task can compare GitHub output with Google Drive and mirror changed presets into the connected user's private `OPRA UAPP Presets` folder.
+4. Generates a UAPP-visible headphone-first preset name from each configured `output_path` plus OPRA creator/details metadata.
+5. Converts OPRA preamp, frequency, gain, Q, and supported filter types into ToneBoosters' normalized preset representation.
+6. Writes UAPP-compatible `.xml` files under `output/`, using the same generated value for the filename and embedded preset name.
+7. Writes `output/manifest.json` with generated `preset_name`, OPRA IDs, original creator/details, source links, source band counts, coverage status, and conversion warnings.
+8. Regenerates the README supported-headphones section and project-description text from `config/targets.json`.
+9. GitHub Actions runs the converter daily and whenever converter/config/test files change.
+10. A scheduled ChatGPT task can compare GitHub output with Google Drive and mirror changed presets into the connected user's private `OPRA UAPP Presets` folder.
 
 ## Output folders
 
@@ -111,7 +141,7 @@ output/
 │   └── HD650/
 └── SIMGOT/
     └── EW300/
-        ├── AutoEQ - Measured by Kazi.xml
+        ├── EW300 - AutoEQ - Kazi.xml
         ├── Gold/
         ├── Silver/
         └── DSP/
@@ -133,6 +163,12 @@ would produce:
 
 ```text
 output/FiiO/FT1/
+```
+
+with UAPP-visible names beginning with:
+
+```text
+FT1 - ...
 ```
 
 and the Drive sync would manage:
@@ -163,6 +199,8 @@ On every run, `src/update_docs.py` regenerates the supported-headphones list in 
 
 The converter's coverage checks run against the current OPRA feed on every build. A newly added OPRA profile that is not covered by the existing routing rules causes a visible build failure instead of silently disappearing or being guessed into the wrong variant folder.
 
+Preset naming is also deterministic and derived from target configuration plus OPRA metadata. Future headphone additions automatically inherit the headphone-first naming format; no per-headphone filename rules should be added.
+
 The recurring Drive sync runs separately through ChatGPT's connected GitHub and Google Drive apps. It reads `config/targets.json` and `output/manifest.json`, so adding a new configured `output_path` does **not** require hard-coding another Drive destination.
 
 When a headphone is added through the ChatGPT Project, the Project instructions tell ChatGPT to sync the affected Drive files immediately after a successful GitHub build when possible. The recurring task then handles future unattended OPRA updates.
@@ -186,11 +224,11 @@ You normally do not need to run this locally. GitHub Actions handles it automati
 ## Important files
 
 - `config/targets.json` — the headphones/variants being managed and their explicit routing rules.
-- `src/build_presets.py` — converter and profile-coverage validation logic.
+- `src/build_presets.py` — converter, UAPP-visible naming, and profile-coverage validation logic.
 - `src/update_docs.py` — automatically updates supported-headphone documentation from the config.
-- `output/manifest.json` — source of truth for generated preset metadata/files and coverage status.
+- `output/manifest.json` — source of truth for generated preset filenames/names, OPRA metadata, and coverage status.
 - `docs/PROJECT_DESCRIPTION.md` — generated project-description text reflecting current configured headphones.
-- `docs/ADDING_HEADPHONES.md` — beginner-friendly manual addition and routing guide.
+- `docs/ADDING_HEADPHONES.md` — beginner-friendly manual addition, naming, and routing guide.
 - `docs/CHATGPT_PROJECT_INSTRUCTIONS.md` — reusable instructions for a ChatGPT Project.
 - `docs/NEW_USER_SETUP.md` — setup guide for a user's own fork and private Google Drive.
 - `docs/AUTOMATION.md` — GitHub → OPRA → Drive automation architecture.
