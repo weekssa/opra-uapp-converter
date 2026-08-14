@@ -112,6 +112,53 @@ def uapp_safe_name(value: str) -> str:
     return value or "Preset"
 
 
+def target_path_parts(target: Target) -> list[str]:
+    return [part.strip() for part in target.output_path.split("/") if part.strip()]
+
+
+def target_display_label(target: Target) -> str:
+    """Return the concise model/variant prefix shown in UAPP."""
+    parts = target_path_parts(target)
+    if len(parts) >= 2:
+        return " ".join(parts[1:])
+    return target.product_name
+
+
+def target_variant_label(target: Target) -> str:
+    """Return variant components beneath Manufacturer/Model, if any."""
+    parts = target_path_parts(target)
+    return " ".join(parts[2:]) if len(parts) >= 3 else ""
+
+
+def compact_preset_details(target: Target, eq: dict[str, Any]) -> str:
+    """Compact redundant wording for display without changing manifest metadata."""
+    details = str(eq.get("details") or "").strip()
+    if not details:
+        return ""
+    details = re.sub(r"^Measured\s+by\s+", "", details, count=1, flags=re.IGNORECASE).strip()
+    variant = target_variant_label(target)
+    if variant:
+        details = re.sub(
+            rf"\s*\(\s*{re.escape(variant)}\s*\)\s*$",
+            "",
+            details,
+            count=1,
+            flags=re.IGNORECASE,
+        ).strip()
+    return details
+
+
+def preset_display_name(target: Target, eq: dict[str, Any]) -> str:
+    """Build the UAPP-visible name: Model [Variant] - Creator - Details."""
+    label = target_display_label(target)
+    author = str(eq.get("author") or "Unknown").strip() or "Unknown"
+    details = compact_preset_details(target, eq)
+    parts = [label, author]
+    if details:
+        parts.append(details)
+    return uapp_safe_name(" - ".join(parts))
+
+
 def fmt(value: float) -> str:
     return format(float(f"{value:.8f}"), ".8g")
 
@@ -205,12 +252,6 @@ def target_matches(target: Target, product: dict[str, Any], eq_id: str, eq: dict
         return True
     haystack = " ".join((eq_id, str(eq.get("details", "")), str(eq.get("author", "")))).casefold()
     return any(term in haystack for term in target.include_terms)
-
-
-def preset_display_name(eq: dict[str, Any]) -> str:
-    author = str(eq.get("author", "Unknown"))
-    details = str(eq.get("details", "")).strip()
-    return uapp_safe_name(f"{author} - {details}" if details else author)
 
 
 def build_coverage_report(
@@ -313,7 +354,7 @@ def write_presets(source: str, config_path: Path, output_root: Path) -> dict[str
         shutil.rmtree(output_root)
     output_root.mkdir(parents=True, exist_ok=True)
 
-    name_counts = Counter((target.output_path, preset_display_name(eq)) for target, _, eq, _, _ in candidates)
+    name_counts = Counter((target.output_path, preset_display_name(target, eq)) for target, _, eq, _, _ in candidates)
     used_paths: set[str] = set()
     manifest_entries: list[dict[str, Any]] = []
     errors: list[str] = list(routing_errors) + list(coverage_errors)
@@ -322,7 +363,7 @@ def write_presets(source: str, config_path: Path, output_root: Path) -> dict[str
         try:
             params = eq["parameters"]
             bands = list(params.get("bands", []))
-            base_name = preset_display_name(eq)
+            base_name = preset_display_name(target, eq)
             name = base_name
             if name_counts[(target.output_path, base_name)] > 1:
                 name = uapp_safe_name(f"{base_name} - {len(bands)} band")
@@ -339,6 +380,7 @@ def write_presets(source: str, config_path: Path, output_root: Path) -> dict[str
             vendor = vendors.get(target.vendor_id, {})
             manifest_entries.append({
                 "file": destination.relative_to(output_root).as_posix(),
+                "preset_name": name,
                 "opra_eq_id": eq_id,
                 "opra_product_id": product_id,
                 "vendor": vendor.get("name", target.vendor_id),
