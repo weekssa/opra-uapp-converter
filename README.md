@@ -51,8 +51,8 @@ Use the ChatGPT Project connected to this repository and say:
 
 The intended workflow is deliberately **two-stage**:
 
-1. ChatGPT checks current OPRA data for the exact headphone, formatting-only product aliases, every usable parametric EQ profile, and identifiable variants.
-2. ChatGPT shows the user the complete candidate EQ list **before changing config**, including each proposed UAPP-visible preset name and destination folder.
+1. ChatGPT identifies the exact OPRA product, directly enumerates its real `eq/` directory, checks formatting-only aliases, and cross-checks the resulting parametric-EQ IDs against the supported `database_v1.jsonl` feed.
+2. ChatGPT shows the user the verified complete candidate EQ list **before changing config**, including each proposed UAPP-visible preset name and destination folder.
 3. The user explicitly chooses **Import all**, **Import only selected EQs**, or **Import all except selected EQs**. ChatGPT does not write `config/targets.json` until this approval is received.
 4. If a profile cannot be classified confidently, ChatGPT asks which folder/variant it belongs to instead of guessing.
 5. ChatGPT translates the approved selection into the narrowest reliable config representation.
@@ -103,6 +103,35 @@ For **Import all except selected EQs**, use exact `exclude_eq_ids`. Explicit exc
 Configured exact include/exclude IDs are validated against the current OPRA product. A typo or stale exact ID makes the build fail instead of silently importing/excluding the wrong thing. The same EQ ID cannot be both included and excluded in one target.
 
 This approval checkpoint is a user-preference safeguard, separate from the converter's technical completeness checks.
+
+## Authoritative OPRA inventory verification
+
+GitHub search is **discovery-only**. It may help locate a product, but GitHub search results must never be used to count EQ profiles or to decide that the candidate list is complete.
+
+Once the exact OPRA product folder is known, the required inventory source is the real directory:
+
+`database/vendors/<vendor_id>/products/<product_folder>/eq/`
+
+For every product record being considered, ChatGPT must:
+
+1. directly enumerate every child folder under that exact `eq/` directory;
+2. open every child's `info.json` and identify whether it is a usable `parametric_eq`;
+3. repeat the same direct enumeration for formatting-only product aliases that belong to the same logical product;
+4. construct the exact OPRA EQ IDs from the verified vendor/product/EQ records;
+5. cross-check the complete parametric-EQ ID set and count against the supported converter feed, `https://opra.roonlabs.net/database_v1.jsonl`;
+6. stop and report the discrepancy instead of showing an approval list if the repository directory and supported feed do not agree.
+
+Before the numbered approval list, ChatGPT should state a verification summary such as:
+
+```text
+OPRA directory: 8 EQ folders
+Usable parametric EQs: 8
+Supported feed: the same 8 EQ IDs
+```
+
+Closely named products must also be made explicit. For example, if a user requests Sony `WF-1000XM5`, ChatGPT should state that it matched `WF-1000XM5` (in-ear) and note the separate `WH-1000XM5` (over-ear) record when relevant. This catches one-letter model mistakes without silently switching products.
+
+If code search returns only a subset of files, that does **not** reduce the verified inventory. The directory enumeration and feed cross-check are authoritative for the approval step.
 
 ## UAPP-visible preset naming
 
@@ -244,7 +273,7 @@ Preset naming is also deterministic and derived from target configuration plus O
 
 The recurring Drive sync runs separately through ChatGPT's connected GitHub and Google Drive apps. It reads `config/targets.json` and `output/manifest.json`, so adding a new configured `output_path` does **not** require hard-coding another Drive destination.
 
-When a headphone is added through the ChatGPT Project, the Project instructions require the user EQ-selection approval checkpoint **before** config changes and then tell ChatGPT to sync the affected Drive files immediately after a successful GitHub build when possible. The recurring task then handles future unattended OPRA updates.
+When a headphone is added through the ChatGPT Project, the Project instructions require authoritative directory/feed inventory verification and the user EQ-selection approval checkpoint **before** config changes, then tell ChatGPT to sync the affected Drive files immediately after a successful GitHub build when possible. The recurring task then handles future unattended OPRA updates.
 
 More detail:
 
