@@ -22,6 +22,26 @@ The description above is generated from `config/targets.json`. The same generate
 
 This list is generated automatically from `config/targets.json`, so adding or removing a target updates the documentation on the next GitHub build.
 
+## Use your own fork and private Drive
+
+This project is designed so another user can fork the repository, connect ChatGPT to **their own fork** and **their own Google Drive**, and maintain a completely independent preset library.
+
+The Google Drive folder does **not** need to be public or shared with GitHub. No Google credentials are stored in this repository.
+
+Start here:
+
+[`docs/NEW_USER_SETUP.md`](docs/NEW_USER_SETUP.md)
+
+That guide covers:
+
+1. forking the public repository;
+2. enabling GitHub Actions in the fork;
+3. authorizing ChatGPT to access the user's fork;
+4. connecting the user's own Google Drive with the required Drive actions;
+5. creating a private `OPRA UAPP Presets` Drive folder;
+6. configuring a ChatGPT Project for the fork;
+7. optionally setting up recurring Drive synchronization.
+
 # The easy way to add a headphone
 
 Use the ChatGPT Project connected to this repository and say:
@@ -55,7 +75,7 @@ For manual additions, including copy/paste JSON examples:
 5. Writes `output/manifest.json` with OPRA IDs, creator attribution, source links, source band counts, and any conversion warnings.
 6. Regenerates the README supported-headphones section and project-description text from `config/targets.json`.
 7. GitHub Actions runs the converter daily and whenever converter/config/test files change.
-8. A scheduled ChatGPT task compares GitHub output with Google Drive and mirrors changed presets into `OPRA UAPP Presets`.
+8. A scheduled ChatGPT task can compare GitHub output with Google Drive and mirror changed presets into the connected user's private `OPRA UAPP Presets` folder.
 
 ## Output folders
 
@@ -65,6 +85,8 @@ Current output:
 output/
 ├── HIFIMAN/
 │   └── Edition XS/
+├── Sennheiser/
+│   └── HD650/
 └── SIMGOT/
     └── EW300/
         ├── Gold/
@@ -116,7 +138,7 @@ If OPRA later supplies an unsupported filter type for one of the configured targ
 
 On every run, `src/update_docs.py` regenerates the supported-headphones list in this README and `docs/PROJECT_DESCRIPTION.md` from `config/targets.json`. This keeps the documentation aligned even when you add a headphone manually.
 
-The recurring Drive sync runs after the GitHub refresh. It reads `config/targets.json` and `output/manifest.json`, so adding a new configured `output_path` does **not** require manually editing the Drive automation.
+The recurring Drive sync runs separately through ChatGPT's connected GitHub and Google Drive apps. It reads `config/targets.json` and `output/manifest.json`, so adding a new configured `output_path` does **not** require hard-coding another Drive destination.
 
 When a headphone is added through the ChatGPT Project, the Project instructions tell ChatGPT to sync the affected Drive files immediately after a successful GitHub build when possible. The recurring task then handles future unattended OPRA updates.
 
@@ -144,15 +166,19 @@ You normally do not need to run this locally. GitHub Actions handles it automati
 - `output/manifest.json` — source of truth for generated preset metadata/files.
 - `docs/PROJECT_DESCRIPTION.md` — generated project-description text reflecting current configured headphones.
 - `docs/ADDING_HEADPHONES.md` — beginner-friendly manual addition guide.
-- `docs/CHATGPT_PROJECT_INSTRUCTIONS.md` — reusable instructions for the ChatGPT Project.
+- `docs/CHATGPT_PROJECT_INSTRUCTIONS.md` — reusable instructions for a ChatGPT Project.
+- `docs/NEW_USER_SETUP.md` — setup guide for a user's own fork and private Google Drive.
 - `docs/AUTOMATION.md` — GitHub → OPRA → Drive automation architecture.
+- `DATA_LICENSE.md` — licensing/attribution rules for OPRA-derived output.
 
 ## Attribution and licenses
 
-The converter code in this repository is independent project code.
+The original converter software and project documentation are licensed under the **MIT License**. See [`LICENSE`](LICENSE).
 
-OPRA manufacturer, product, and EQ data is licensed by the OPRA project under CC BY-SA 4.0. Generated preset metadata is tracked in `output/manifest.json`, including the individual EQ creator and source link where OPRA provides one. See the OPRA repository for complete attribution and licensing details.
+OPRA manufacturer, product, and EQ data is licensed by the OPRA project under **CC BY-SA 4.0**. The OPRA-derived portions of generated files under `output/` are therefore not relicensed as MIT. Creator attribution, source links, and OPRA identifiers are preserved in `output/manifest.json`.
+
+See [`DATA_LICENSE.md`](DATA_LICENSE.md) for the licensing boundary and attribution details.
 
 ## ToneBoosters format references
 
-The ToneBoosters/UAPP XML mapping is based on the established open-source implementations `KassMiw/PEQ2UAPP` and `SiliconExarch/EqConverter`, with independent validation and stricter error handling here.
+The ToneBoosters/UAPP XML mapping is an independent implementation informed by publicly available compatibility information and community converters, including `KassMiw/PEQ2UAPP` and `SiliconExarch/EqConverter`. Referencing those projects does not place their source code in this repository.
