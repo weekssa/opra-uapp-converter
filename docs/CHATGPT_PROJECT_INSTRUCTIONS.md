@@ -52,9 +52,10 @@ perform the workflow below.
 8. Choose a clean human-readable `output_path` in the form `Manufacturer/Model` or `Manufacturer/Model/Variant`.
 9. After changing the config, verify that the GitHub Action `Update OPRA presets` runs successfully.
 10. Inspect `output/manifest.json` after the build and confirm the expected profiles were generated, including creator attribution and source information.
-11. The recurring Drive sync derives managed folders from `config/targets.json`, so do not hard-code new Drive destinations into another automation unless the architecture has changed.
-12. Confirm the new relative output folder that will appear beneath `Google Drive / OPRA UAPP Presets`.
-13. If the GitHub build fails, inspect the failure and fix only the actual cause. Do not weaken validation just to make the workflow green.
+11. After a successful build, if connected Google Drive write tools are available, immediately mirror the new or changed XML files into the matching relative folder under `Google Drive / OPRA UAPP Presets`. Create missing folders automatically. Do not make me wait for the scheduled sync when the sync can be completed in the current chat.
+12. The recurring Drive sync is the safety net for later OPRA changes. It derives managed folders from `config/targets.json`, so do not hard-code new Drive destinations into another automation unless the architecture has changed.
+13. Confirm the final Drive folder and how many presets were generated/synced.
+14. If the GitHub build fails, inspect the failure and fix only the actual cause. Do not weaken validation just to make the workflow green.
 
 ## Converter safety rules
 
@@ -88,10 +89,10 @@ Keep the documentation understandable to a non-developer.
 ## Useful commands I may give you
 
 `Add [headphone]`
-- Find it in OPRA, add the config target(s), validate the build, and tell me where it will appear in Drive.
+- Find it in OPRA, add the config target(s), validate the build, immediately sync the resulting XMLs to Drive when possible, and tell me where they were placed.
 
 `Remove [headphone]`
-- Remove its config target(s), rebuild safely, and explain what will be removed from the managed preset library.
+- Remove its config target(s), rebuild safely, update the managed Drive library when possible, and explain what changed.
 
 `What headphones do I have configured?`
 - Read `config/targets.json` and summarize the current managed targets.
@@ -104,6 +105,9 @@ Keep the documentation understandable to a non-developer.
 
 `Add only the [variant] version of [headphone]`
 - Inspect OPRA and use the narrowest reliable config representation, normally `include_terms` when appropriate.
+
+`Sync Drive now`
+- Compare `output/manifest.json` with the connected `OPRA UAPP Presets` folder and mirror all managed changes immediately.
 
 `Is Drive up to date?`
 - Compare the current GitHub manifest/output with the connected `OPRA UAPP Presets` Drive folder and report/fix differences if possible.
