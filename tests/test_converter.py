@@ -36,6 +36,9 @@ class ConverterTests(unittest.TestCase):
         self.assertEqual(values[8].text, "1")
         self.assertEqual(values[62].text, "1")
 
+    def test_uapp_name_sanitizes_unicode_bullet(self):
+        self.assertEqual(mod.uapp_safe_name("RTINGS • Studio"), "RTINGS - Studio")
+
     def test_end_to_end_jsonl_selection(self):
         entries = [
             {"type": "vendor", "id": "hifiman", "data": {"name": "HIFIMAN"}},
@@ -59,6 +62,28 @@ class ConverterTests(unittest.TestCase):
             self.assertTrue((output / "SIMGOT/EW300/Gold/AutoEQ - Measured by X (gold).xml").exists())
             self.assertTrue((output / "SIMGOT/EW300/Silver/AutoEQ - Measured by X (silver).xml").exists())
             self.assertTrue((output / "SIMGOT/EW300/DSP/AutoEQ - Measured by Jaytiss.xml").exists())
+
+    def test_duplicate_human_names_get_band_count_suffixes(self):
+        bands5 = [{"type": "peak_dip", "frequency": 100 + i * 100, "gain_db": 0, "q": 1} for i in range(5)]
+        bands10 = [{"type": "peak_dip", "frequency": 100 + i * 100, "gain_db": 0, "q": 1} for i in range(10)]
+        entries = [
+            {"type": "vendor", "id": "hifiman", "data": {"name": "HIFIMAN"}},
+            {"type": "product", "id": "hifiman_edition_xs", "data": {"vendor_id": "hifiman", "name": "Edition XS", "type": "headphones", "subtype": "over_the_ear"}},
+            {"type": "eq", "id": "hifiman:edition_xs::same_5band", "data": {"product_id": "hifiman_edition_xs", "author": "Rtings/AutoEQ", "details": "Target • Consolidated", "type": "parametric_eq", "parameters": {"gain_db": -4, "bands": bands5}}},
+            {"type": "eq", "id": "hifiman:edition_xs::same_10band", "data": {"product_id": "hifiman_edition_xs", "author": "Rtings/AutoEQ", "details": "Target • Consolidated", "type": "parametric_eq", "parameters": {"gain_db": -4, "bands": bands10}}}
+        ]
+        config = {"targets": [{"vendor_id": "hifiman", "product_name": "Edition XS", "output_path": "HIFIMAN/Edition XS"}]}
+        with tempfile.TemporaryDirectory() as td:
+            td = Path(td)
+            source = td / "db.jsonl"
+            source.write_text("\n".join(json.dumps(x) for x in entries) + "\n")
+            config_path = td / "targets.json"
+            config_path.write_text(json.dumps(config))
+            output = td / "output"
+            manifest = mod.write_presets(str(source), config_path, output)
+            self.assertEqual(manifest["preset_count"], 2)
+            self.assertTrue((output / "HIFIMAN/Edition XS/Rtings-AutoEQ - Target - Consolidated - 5 band.xml").exists())
+            self.assertTrue((output / "HIFIMAN/Edition XS/Rtings-AutoEQ - Target - Consolidated - 10 band.xml").exists())
 
 
 if __name__ == "__main__":
