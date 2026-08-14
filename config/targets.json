@@ -1,0 +1,26 @@
+{
+  "targets": [
+    {
+      "vendor_id": "hifiman",
+      "product_name": "Edition XS",
+      "output_path": "HIFIMAN/Edition XS"
+    },
+    {
+      "vendor_id": "simgot_audio",
+      "product_name": "EW300",
+      "include_terms": ["gold"],
+      "output_path": "SIMGOT/EW300/Gold"
+    },
+    {
+      "vendor_id": "simgot_audio",
+      "product_name": "EW300",
+      "include_terms": ["silver"],
+      "output_path": "SIMGOT/EW300/Silver"
+    },
+    {
+      "vendor_id": "simgot_audio",
+      "product_name": "EW300 DSP",
+      "output_path": "SIMGOT/EW300/DSP"
+    }
+  ]
+}
