@@ -11,7 +11,7 @@ The workflow:
 1. Regenerates documentation from `config/targets.json`.
 2. Runs the converter tests.
 3. Downloads OPRA's supported `database_v1.jsonl` feed.
-4. Validates target matching, formatting-only product aliases, profile coverage, and route exclusivity.
+4. Validates target matching, formatting-only product aliases, profile coverage, route exclusivity, and UAPP-visible preset naming.
 5. Generates the configured UAPP/ToneBoosters XML presets under `output/`.
 6. Uploads the generated output as a short-lived workflow artifact for debugging/recovery.
 7. Commits output/documentation only if the actual repository content changed.
@@ -19,6 +19,38 @@ The workflow:
 The generated output is deterministic, so unchanged OPRA data does not create a daily noise commit.
 
 `config/targets.json` defines which products/variants are managed and how each OPRA profile is routed.
+
+## UAPP-visible preset naming guard
+
+UAPP's preset picker does not show the source folder. Every generated preset therefore uses the deterministic format:
+
+```text
+Model [Variant] - Creator - Details
+```
+
+The model/variant prefix is derived from `output_path` by dropping the first manufacturer component and joining the remaining components with spaces. Examples:
+
+```text
+HIFIMAN/Edition XS     -> Edition XS
+SIMGOT/EW300           -> EW300
+SIMGOT/EW300/Gold      -> EW300 Gold
+SIMGOT/EW300/DSP       -> EW300 DSP
+Sennheiser/HD650       -> HD650
+```
+
+The converter writes this generated name both as the XML filename and the embedded ToneBoosters `PresetInfo Name`, and records it in `output/manifest.json` as `preset_name`.
+
+Display-only compaction removes a leading `Measured by ` from OPRA details and removes a trailing parenthetical variant only when it duplicates the configured variant. Original OPRA `author` and `details` are preserved unchanged in the manifest.
+
+Unit tests assert representative names such as:
+
+```text
+EW300 Gold - AutoEQ - Fahryst
+EW300 - AutoEQ - Kazi
+HD650 - oratory1990 - Harman Target
+```
+
+This naming behavior is global converter behavior. New headphones inherit it automatically; maintenance should not add per-headphone filename hacks.
 
 ## Completeness guard
 
@@ -52,7 +84,7 @@ That changes the coverage report to `partial` and allows unmatched OPRA profiles
 
 When OPRA adds a new profile to a configured complete product:
 
-- if an existing rule clearly matches it, it is generated normally;
+- if an existing rule clearly matches it, it is generated normally with the standard headphone-first name;
 - if no rule matches it, the GitHub build fails;
 - if it would match multiple variant folders, the GitHub build fails.
 
@@ -122,7 +154,7 @@ A model root may itself contain generated XML files while also containing varian
 OPRA UAPP Presets/
 └── SIMGOT/
     └── EW300/
-        ├── AutoEQ - Measured by Kazi.xml
+        ├── EW300 - AutoEQ - Kazi.xml
         ├── Gold/
         ├── Silver/
         └── DSP/
@@ -132,20 +164,23 @@ The root target manages generated XML files directly in `EW300`; the variant tar
 
 When a new target is added, the Drive sync can create missing destination folders automatically. No separate hard-coded folder list needs to be maintained.
 
+When converter naming changes, the Drive sync must treat the manifest's `file` entries as authoritative: renamed generated XML files replace obsolete generated names rather than leaving duplicates behind.
+
 The Drive sync:
 
 1. Confirms the latest GitHub `Update OPRA presets` workflow succeeded.
 2. Reads the current target config and manifest.
 3. Verifies the manifest has no errors/unexpected unmatched profiles for complete products.
-4. Creates missing managed Drive folders when needed.
-5. Adds new XML files.
-6. Replaces changed XML files.
-7. Removes obsolete generated XML files only within the applicable managed folder level.
-8. Updates the root `manifest.json`.
-9. Does not modify unrelated Drive content.
-10. Stays silent when GitHub and Drive are already in sync.
+4. Verifies generated `preset_name` values use the expected headphone/model prefix.
+5. Creates missing managed Drive folders when needed.
+6. Adds new XML files.
+7. Replaces changed or renamed XML files.
+8. Removes obsolete generated XML files only within the applicable managed folder level.
+9. Updates the root `manifest.json`.
+10. Does not modify unrelated Drive content.
+11. Stays silent when GitHub and Drive are already in sync.
 
-`output/manifest.json` is the source of truth for which generated preset files should exist.
+`output/manifest.json` is the source of truth for which generated preset files should exist and what UAPP should display for each preset.
 
 ## ChatGPT app permissions
 
@@ -167,7 +202,7 @@ See `docs/NEW_USER_SETUP.md` for the user-facing setup steps.
 
 For a normal addition, only `config/targets.json` should need to change.
 
-Before that change is made, the maintenance workflow inventories all OPRA profiles and possible formatting-only aliases. The config change then triggers GitHub Actions. Once the output is rebuilt successfully with complete/intentional-partial coverage, the connected ChatGPT workflow mirrors the resulting XML files and root manifest into that user's Drive.
+Before that change is made, the maintenance workflow inventories all OPRA profiles and possible formatting-only aliases. The config change then triggers GitHub Actions. Once the output is rebuilt successfully with complete/intentional-partial coverage and correct headphone-first `preset_name` values, the connected ChatGPT workflow mirrors the resulting XML files and root manifest into that user's Drive.
 
 See:
 
@@ -188,6 +223,8 @@ A GitHub build fails rather than silently producing incorrect/incomplete output 
 - a value falls outside the supported ToneBoosters conversion range.
 
 When a coverage/routing failure requires a classification choice, the correct response is to inspect OPRA and ask the user if necessary. Do not add `allow_partial`, broaden filters, or invent a variant just to make the workflow green.
+
+A preset-naming regression is also a release blocker: generated names must keep the headphone/model first so UAPP users can identify the preset without seeing its folder.
 
 The Drive sync must not mirror a failed/partial build that was not intentionally configured. It first confirms that the latest GitHub workflow completed successfully.
 
