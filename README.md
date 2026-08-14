@@ -22,8 +22,9 @@ The intended workflow is:
 1. ChatGPT checks current OPRA data for the exact headphone and available EQ profiles.
 2. ChatGPT updates `config/targets.json`.
 3. GitHub Actions automatically rebuilds and validates the XML library.
-4. The scheduled Drive sync reads the config/manifest and creates or updates the matching folder under `Google Drive / OPRA UAPP Presets`.
-5. You access the XML from Drive and import it into UAPP.
+4. ChatGPT verifies the generated manifest and, when Drive write access is available, immediately syncs the new/changed XML files into the matching folder under `Google Drive / OPRA UAPP Presets`.
+5. The recurring Drive sync remains a safety net for later OPRA changes.
+6. You access the XML from Drive and import it into UAPP.
 
 The reusable Project Instructions are stored here:
 
@@ -101,6 +102,8 @@ If OPRA later supplies an unsupported filter type for one of the configured targ
 `.github/workflows/update-presets.yml` runs every day at 09:17 UTC and can also be started manually from the Actions tab. It also runs automatically when converter/config/test files change.
 
 The recurring Drive sync runs after the GitHub refresh. It reads `config/targets.json` and `output/manifest.json`, so adding a new configured `output_path` does **not** require manually editing the Drive automation.
+
+When a headphone is added through the ChatGPT Project, the Project instructions tell ChatGPT to sync the affected Drive files immediately after a successful GitHub build when possible. The recurring task then handles future unattended OPRA updates.
 
 More detail:
 
