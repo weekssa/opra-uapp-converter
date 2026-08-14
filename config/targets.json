@@ -8,6 +8,12 @@
     {
       "vendor_id": "simgot_audio",
       "product_name": "EW300",
+      "include_eq_ids": ["simgot_audio:ew300::autoeq_kazi"],
+      "output_path": "SIMGOT/EW300"
+    },
+    {
+      "vendor_id": "simgot_audio",
+      "product_name": "EW300",
       "include_terms": ["gold"],
       "output_path": "SIMGOT/EW300/Gold"
     },
