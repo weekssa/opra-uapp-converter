@@ -95,6 +95,29 @@ class ConverterTests(unittest.TestCase):
             self.assertTrue((output / "HIFIMAN/Edition XS/Rtings-AutoEQ - Target - Consolidated - 5 band.xml").exists())
             self.assertTrue((output / "HIFIMAN/Edition XS/Rtings-AutoEQ - Target - Consolidated - 10 band.xml").exists())
 
+    def test_shared_output_targets_are_validated_independently(self):
+        entries = [
+            {"type": "vendor", "id": "sennheiser", "data": {"name": "Sennheiser"}},
+            {"type": "product", "id": "sennheiser_hd_650", "data": {"vendor_id": "sennheiser", "name": "HD 650", "type": "headphones", "subtype": "over_the_ear"}},
+            {"type": "eq", "id": "sennheiser:hd_650::autoeq_test", "data": {"product_id": "sennheiser_hd_650", "author": "AutoEQ", "details": "Measured by Test", "type": "parametric_eq", "parameters": {"gain_db": -5, "bands": [{"type": "peak_dip", "frequency": 1000, "gain_db": 0, "q": 1}]}}},
+        ]
+        config = {
+            "targets": [
+                {"vendor_id": "sennheiser", "product_name": "HD 650", "output_path": "Sennheiser/HD650"},
+                {"vendor_id": "sennheiser", "product_name": "HD650", "output_path": "Sennheiser/HD650"},
+            ]
+        }
+        with tempfile.TemporaryDirectory() as td:
+            td = Path(td)
+            source = td / "db.jsonl"
+            source.write_text("\n".join(json.dumps(x) for x in entries) + "\n")
+            config_path = td / "targets.json"
+            config_path.write_text(json.dumps(config))
+            output = td / "output"
+            with self.assertRaises(RuntimeError) as ctx:
+                mod.write_presets(str(source), config_path, output)
+            self.assertIn("sennheiser / HD650 -> Sennheiser/HD650", str(ctx.exception))
+
 
 if __name__ == "__main__":
     unittest.main()
