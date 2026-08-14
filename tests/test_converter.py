@@ -51,12 +51,22 @@ class ConverterTests(unittest.TestCase):
             {"type": "eq", "id": "simgot_audio_ew300_silver", "data": {"product_id": "simgot_audio_ew300", "author": "AutoEQ", "details": "Measured by X (silver)", "type": "parametric_eq", "parameters": {"gain_db": -4.9, "bands": [{"type": "high_shelf", "frequency": 10000, "gain_db": -3, "q": 0.7}]}}},
             {"type": "eq", "id": "simgot_audio_ew300_dsp_jaytiss", "data": {"product_id": "simgot_audio_ew300_dsp", "author": "AutoEQ", "details": "Measured by Jaytiss", "type": "parametric_eq", "parameters": {"gain_db": -5.5, "bands": [{"type": "peak_dip", "frequency": 6727, "gain_db": 5.5, "q": 1.81}]}}}
         ]
+        config = {
+            "targets": [
+                {"vendor_id": "hifiman", "product_name": "Edition XS", "output_path": "HIFIMAN/Edition XS"},
+                {"vendor_id": "simgot_audio", "product_name": "EW300", "include_terms": ["gold"], "output_path": "SIMGOT/EW300/Gold"},
+                {"vendor_id": "simgot_audio", "product_name": "EW300", "include_terms": ["silver"], "output_path": "SIMGOT/EW300/Silver"},
+                {"vendor_id": "simgot_audio", "product_name": "EW300 DSP", "output_path": "SIMGOT/EW300/DSP"},
+            ]
+        }
         with tempfile.TemporaryDirectory() as td:
             td = Path(td)
             source = td / "db.jsonl"
             source.write_text("\n".join(json.dumps(x) for x in entries) + "\n")
+            config_path = td / "targets.json"
+            config_path.write_text(json.dumps(config))
             output = td / "output"
-            manifest = mod.write_presets(str(source), ROOT / "config" / "targets.json", output)
+            manifest = mod.write_presets(str(source), config_path, output)
             self.assertEqual(manifest["preset_count"], 4)
             self.assertTrue((output / "HIFIMAN/Edition XS/oratory1990 - Harman Target.xml").exists())
             self.assertTrue((output / "SIMGOT/EW300/Gold/AutoEQ - Measured by X (gold).xml").exists())
