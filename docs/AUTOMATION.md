@@ -6,7 +6,7 @@ This project has two intentionally separate automation layers, plus one required
 
 A new-headphone request is intentionally a **two-stage workflow**:
 
-1. **Inventory and user approval** — ChatGPT inspects current OPRA, possible formatting-only aliases, every usable parametric EQ, proposed routing, and proposed UAPP-visible names. It shows the complete candidate list and waits for the user's import preference.
+1. **Inventory verification and user approval** — ChatGPT identifies the exact OPRA product, directly enumerates its real `eq/` directory, checks formatting-only aliases, cross-checks the usable parametric-EQ IDs against `database_v1.jsonl`, proposes routing/UAPP-visible names, then shows the verified complete candidate list and waits for the user's preference.
 2. **Configuration/build/sync** — only after approval does ChatGPT update `config/targets.json`, validate the GitHub build, inspect the manifest, and mirror the approved output to Drive.
 
 The user can choose:
@@ -17,9 +17,57 @@ The user can choose:
 
 The initial `Add [headphone]` request is not itself permission to silently import every profile.
 
-The candidate list should include a numbered entry for every usable OPRA parametric EQ with its proposed UAPP-visible name, creator/details, exact OPRA EQ ID, band count, proposed folder/variant, and source link when available.
+The candidate list should include a numbered entry for every verified usable OPRA parametric EQ with its proposed UAPP-visible name, creator/details, exact OPRA EQ ID, band count, proposed folder/variant, and source link when available.
 
 This human approval checkpoint and the converter's technical coverage checks solve different problems: the checkpoint confirms the user's preference, while the converter verifies that the approved preference was represented accurately and no unrelated profile disappeared accidentally.
+
+## Pre-import OPRA inventory verification guard
+
+The approval list itself must be verified before it is shown to the user.
+
+### GitHub search is discovery-only
+
+GitHub search can be used to locate a likely product record, but search results are not an authoritative directory listing. They may omit valid files. Search result count must never be used as the EQ count.
+
+After the exact product record is identified, ChatGPT must directly enumerate:
+
+`database/vendors/<vendor_id>/products/<product_folder>/eq/`
+
+Every child EQ folder must be opened and its `info.json` inspected. Only entries whose OPRA `type` is `parametric_eq` are usable candidates for this converter.
+
+The same direct enumeration must be performed for formatting-only aliases that are being treated as part of the same logical product.
+
+### Supported-feed cross-check
+
+The converter consumes OPRA's supported distribution feed:
+
+`https://opra.roonlabs.net/database_v1.jsonl`
+
+Before user approval, the exact parametric-EQ ID set obtained from the primary OPRA repository must be compared with the exact IDs present for the same product record(s) in `database_v1.jsonl`.
+
+The pre-import gate passes only when the repository and feed agree on the usable parametric-EQ set. If they disagree, ChatGPT must stop before editing config or presenting a supposedly complete approval list and explain the discrepancy.
+
+This guard is intentionally separate from the converter's post-config coverage validation. Coverage validation can prove that configured feed entries were accounted for; it cannot repair an approval list that was incomplete because discovery relied on partial code-search results.
+
+### Similar-product disambiguation
+
+Before the EQ list, ChatGPT should state the exact matched OPRA product name, product folder, and subtype. When the same vendor contains an obviously similar sibling name, mention it rather than silently switching products.
+
+Example:
+
+```text
+Matched: Sony WF-1000XM5 (in-ear)
+Similar OPRA product: Sony WH-1000XM5 (over-ear)
+Proceeding with WF-1000XM5 because that is the requested model.
+```
+
+The approval message should also state the verification totals, for example:
+
+```text
+OPRA directory: 8 EQ folders
+Usable parametric EQs: 8
+Supported database_v1.jsonl feed: the same 8 EQ IDs
+```
 
 ## 1. OPRA → GitHub output
 
@@ -28,7 +76,7 @@ GitHub Actions runs `.github/workflows/update-presets.yml` once per day and on r
 The workflow:
 
 1. Regenerates documentation from `config/targets.json`.
-2. Runs the converter tests.
+2. Runs the converter and documentation-safeguard tests.
 3. Downloads OPRA's supported `database_v1.jsonl` feed.
 4. Validates target matching, exact include/exclude IDs, formatting-only product aliases, profile coverage, route exclusivity, and UAPP-visible preset naming.
 5. Generates the configured UAPP/ToneBoosters XML presets under `output/`.
@@ -93,9 +141,9 @@ This naming behavior is global converter behavior. New headphones inherit it aut
 
 ## Completeness guard
 
-The GitHub build is intentionally responsible for detecting profiles that would otherwise be missed silently.
+The GitHub build is intentionally responsible for detecting profiles that would otherwise be missed silently after configuration.
 
-For each configured logical product, the converter normalizes formatting-only differences in product names (spaces, punctuation, capitalization) and audits every OPRA `parametric_eq` profile across those possible aliases.
+For each configured logical product, the converter normalizes formatting-only differences in product names (spaces, punctuation, capitalization) and audits every OPRA `parametric_eq` profile across those possible aliases in the supported feed.
 
 A normal product is in **complete** mode. Every OPRA parametric profile must be one of:
 
@@ -253,7 +301,7 @@ See `docs/NEW_USER_SETUP.md` for the user-facing setup steps.
 
 For a normal addition, only `config/targets.json` should need to change **after user approval**.
 
-Before that change is made, the maintenance workflow inventories all OPRA profiles and possible formatting-only aliases, proposes the UAPP names/folders, and asks the user to approve all/some/all-except. The config change then represents that exact decision and triggers GitHub Actions. Once the output is rebuilt successfully with correct coverage/exclusion accounting and headphone-first `preset_name` values, the connected ChatGPT workflow mirrors the resulting XML files and root manifest into that user's Drive.
+Before that change is made, the maintenance workflow verifies the product inventory by direct OPRA directory enumeration plus `database_v1.jsonl` cross-check, checks formatting-only aliases, proposes the UAPP names/folders, and asks the user to approve all/some/all-except. The config change then represents that exact decision and triggers GitHub Actions. Once the output is rebuilt successfully with correct coverage/exclusion accounting and headphone-first `preset_name` values, the connected ChatGPT workflow mirrors the resulting XML files and root manifest into that user's Drive.
 
 See:
 
@@ -264,6 +312,12 @@ See:
 ## Failure behavior
 
 The system is intentionally conservative.
+
+A pre-import inventory must stop before approval/config changes when:
+
+- the exact product is not clear;
+- a closely named product creates unresolved ambiguity;
+- direct OPRA `eq/` enumeration and `database_v1.jsonl` expose different parametric-EQ ID sets/counts.
 
 A GitHub build fails rather than silently producing incorrect/incomplete output when, for example:
 
