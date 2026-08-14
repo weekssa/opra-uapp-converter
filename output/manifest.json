@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-08-14T20:10:26.607796+00:00",
+  "generated_at_utc": "2026-08-14T20:12:29.594527+00:00",
   "opra_source": "https://opra.roonlabs.net/database_v1.jsonl",
   "opra_attribution": "EQ data from the OPRA project (CC BY-SA 4.0). Preset creators are credited per file in this manifest.",
   "preset_count": 27,
@@ -75,21 +75,7 @@
       "warnings": []
     },
     {
-      "file": "HIFIMAN/Edition XS/Rtings-AutoEQ - HRTF_5128_Diffuse_Field - Consolidated.xml",
-      "opra_eq_id": "hifiman:edition_xs::rtings_hrtf_5128_diffuse_field_consolidated_parametric_5band",
-      "opra_product_id": "hifiman::edition_xs",
-      "vendor": "HIFIMAN",
-      "product": "Edition XS",
-      "author": "Rtings/AutoEQ",
-      "details": "HRTF_5128_Diffuse_Field • Consolidated",
-      "source_link": null,
-      "preamp_db": -4.8,
-      "opra_band_count": 5,
-      "uapp_band_count": 5,
-      "warnings": []
-    },
-    {
-      "file": "HIFIMAN/Edition XS/Rtings-AutoEQ - HRTF_5128_Diffuse_Field - Consolidated.xml",
+      "file": "HIFIMAN/Edition XS/Rtings-AutoEQ - HRTF_5128_Diffuse_Field - Consolidated - 10 band.xml",
       "opra_eq_id": "hifiman:edition_xs::rtings_hrtf_5128_diffuse_field_consolidated_parametric_10band",
       "opra_product_id": "hifiman::edition_xs",
       "vendor": "HIFIMAN",
@@ -103,21 +89,21 @@
       "warnings": []
     },
     {
-      "file": "HIFIMAN/Edition XS/Rtings-AutoEQ - Target_Harman_IEM - Consolidated.xml",
-      "opra_eq_id": "hifiman:edition_xs::rtings_target_harman_iem_consolidated_parametric_5band",
+      "file": "HIFIMAN/Edition XS/Rtings-AutoEQ - HRTF_5128_Diffuse_Field - Consolidated - 5 band.xml",
+      "opra_eq_id": "hifiman:edition_xs::rtings_hrtf_5128_diffuse_field_consolidated_parametric_5band",
       "opra_product_id": "hifiman::edition_xs",
       "vendor": "HIFIMAN",
       "product": "Edition XS",
       "author": "Rtings/AutoEQ",
-      "details": "Target_Harman_IEM • Consolidated",
+      "details": "HRTF_5128_Diffuse_Field • Consolidated",
       "source_link": null,
-      "preamp_db": -6.9,
+      "preamp_db": -4.8,
       "opra_band_count": 5,
       "uapp_band_count": 5,
       "warnings": []
     },
     {
-      "file": "HIFIMAN/Edition XS/Rtings-AutoEQ - Target_Harman_IEM - Consolidated.xml",
+      "file": "HIFIMAN/Edition XS/Rtings-AutoEQ - Target_Harman_IEM - Consolidated - 10 band.xml",
       "opra_eq_id": "hifiman:edition_xs::rtings_target_harman_iem_consolidated_parametric_10band",
       "opra_product_id": "hifiman::edition_xs",
       "vendor": "HIFIMAN",
@@ -131,21 +117,21 @@
       "warnings": []
     },
     {
-      "file": "HIFIMAN/Edition XS/Rtings-AutoEQ - Target_Rtings_com - Consolidated.xml",
-      "opra_eq_id": "hifiman:edition_xs::rtings_target_rtings_com_consolidated_parametric_5band",
+      "file": "HIFIMAN/Edition XS/Rtings-AutoEQ - Target_Harman_IEM - Consolidated - 5 band.xml",
+      "opra_eq_id": "hifiman:edition_xs::rtings_target_harman_iem_consolidated_parametric_5band",
       "opra_product_id": "hifiman::edition_xs",
       "vendor": "HIFIMAN",
       "product": "Edition XS",
       "author": "Rtings/AutoEQ",
-      "details": "Target_Rtings_com • Consolidated",
+      "details": "Target_Harman_IEM • Consolidated",
       "source_link": null,
-      "preamp_db": -5.1,
+      "preamp_db": -6.9,
       "opra_band_count": 5,
       "uapp_band_count": 5,
       "warnings": []
     },
     {
-      "file": "HIFIMAN/Edition XS/Rtings-AutoEQ - Target_Rtings_com - Consolidated.xml",
+      "file": "HIFIMAN/Edition XS/Rtings-AutoEQ - Target_Rtings_com - Consolidated - 10 band.xml",
       "opra_eq_id": "hifiman:edition_xs::rtings_target_rtings_com_consolidated_parametric_10band",
       "opra_product_id": "hifiman::edition_xs",
       "vendor": "HIFIMAN",
@@ -159,7 +145,21 @@
       "warnings": []
     },
     {
-      "file": "HIFIMAN/Edition XS/Rtings-AutoEQ - Target_SenseLab_Aizu - Consolidated.xml",
+      "file": "HIFIMAN/Edition XS/Rtings-AutoEQ - Target_Rtings_com - Consolidated - 5 band.xml",
+      "opra_eq_id": "hifiman:edition_xs::rtings_target_rtings_com_consolidated_parametric_5band",
+      "opra_product_id": "hifiman::edition_xs",
+      "vendor": "HIFIMAN",
+      "product": "Edition XS",
+      "author": "Rtings/AutoEQ",
+      "details": "Target_Rtings_com • Consolidated",
+      "source_link": null,
+      "preamp_db": -5.1,
+      "opra_band_count": 5,
+      "uapp_band_count": 5,
+      "warnings": []
+    },
+    {
+      "file": "HIFIMAN/Edition XS/Rtings-AutoEQ - Target_SenseLab_Aizu - Consolidated - 10 band.xml",
       "opra_eq_id": "hifiman:edition_xs::rtings_target_senselab_aizu_consolidated_parametric_10band",
       "opra_product_id": "hifiman::edition_xs",
       "vendor": "HIFIMAN",
@@ -173,7 +173,7 @@
       "warnings": []
     },
     {
-      "file": "HIFIMAN/Edition XS/Rtings-AutoEQ - Target_SenseLab_Aizu - Consolidated.xml",
+      "file": "HIFIMAN/Edition XS/Rtings-AutoEQ - Target_SenseLab_Aizu - Consolidated - 5 band.xml",
       "opra_eq_id": "hifiman:edition_xs::rtings_target_senselab_aizu_consolidated_parametric_5band",
       "opra_product_id": "hifiman::edition_xs",
       "vendor": "HIFIMAN",
@@ -187,21 +187,7 @@
       "warnings": []
     },
     {
-      "file": "HIFIMAN/Edition XS/Rtings-AutoEQ - Target_SoundGuys_Consumer - Consolidated.xml",
-      "opra_eq_id": "hifiman:edition_xs::rtings_target_soundguys_consumer_consolidated_parametric_5band",
-      "opra_product_id": "hifiman::edition_xs",
-      "vendor": "HIFIMAN",
-      "product": "Edition XS",
-      "author": "Rtings/AutoEQ",
-      "details": "Target_SoundGuys_Consumer • Consolidated",
-      "source_link": null,
-      "preamp_db": -5.7,
-      "opra_band_count": 5,
-      "uapp_band_count": 5,
-      "warnings": []
-    },
-    {
-      "file": "HIFIMAN/Edition XS/Rtings-AutoEQ - Target_SoundGuys_Consumer - Consolidated.xml",
+      "file": "HIFIMAN/Edition XS/Rtings-AutoEQ - Target_SoundGuys_Consumer - Consolidated - 10 band.xml",
       "opra_eq_id": "hifiman:edition_xs::rtings_target_soundguys_consumer_consolidated_parametric_10band",
       "opra_product_id": "hifiman::edition_xs",
       "vendor": "HIFIMAN",
@@ -215,21 +201,21 @@
       "warnings": []
     },
     {
-      "file": "HIFIMAN/Edition XS/Rtings-AutoEQ - Target_SoundGuys_Studio - Consolidated.xml",
-      "opra_eq_id": "hifiman:edition_xs::rtings_target_soundguys_studio_consolidated_parametric_5band",
+      "file": "HIFIMAN/Edition XS/Rtings-AutoEQ - Target_SoundGuys_Consumer - Consolidated - 5 band.xml",
+      "opra_eq_id": "hifiman:edition_xs::rtings_target_soundguys_consumer_consolidated_parametric_5band",
       "opra_product_id": "hifiman::edition_xs",
       "vendor": "HIFIMAN",
       "product": "Edition XS",
       "author": "Rtings/AutoEQ",
-      "details": "Target_SoundGuys_Studio • Consolidated",
+      "details": "Target_SoundGuys_Consumer • Consolidated",
       "source_link": null,
-      "preamp_db": -4,
+      "preamp_db": -5.7,
       "opra_band_count": 5,
       "uapp_band_count": 5,
       "warnings": []
     },
     {
-      "file": "HIFIMAN/Edition XS/Rtings-AutoEQ - Target_SoundGuys_Studio - Consolidated.xml",
+      "file": "HIFIMAN/Edition XS/Rtings-AutoEQ - Target_SoundGuys_Studio - Consolidated - 10 band.xml",
       "opra_eq_id": "hifiman:edition_xs::rtings_target_soundguys_studio_consolidated_parametric_10band",
       "opra_product_id": "hifiman::edition_xs",
       "vendor": "HIFIMAN",
@@ -240,6 +226,20 @@
       "preamp_db": -3.7,
       "opra_band_count": 10,
       "uapp_band_count": 10,
+      "warnings": []
+    },
+    {
+      "file": "HIFIMAN/Edition XS/Rtings-AutoEQ - Target_SoundGuys_Studio - Consolidated - 5 band.xml",
+      "opra_eq_id": "hifiman:edition_xs::rtings_target_soundguys_studio_consolidated_parametric_5band",
+      "opra_product_id": "hifiman::edition_xs",
+      "vendor": "HIFIMAN",
+      "product": "Edition XS",
+      "author": "Rtings/AutoEQ",
+      "details": "Target_SoundGuys_Studio • Consolidated",
+      "source_link": null,
+      "preamp_db": -4,
+      "opra_band_count": 5,
+      "uapp_band_count": 5,
       "warnings": []
     },
     {
