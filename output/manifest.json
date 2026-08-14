@@ -1,7 +1,7 @@
 {
   "opra_source": "https://opra.roonlabs.net/database_v1.jsonl",
   "opra_attribution": "EQ data from the OPRA project (CC BY-SA 4.0). Preset creators are credited per file in this manifest.",
-  "preset_count": 42,
+  "preset_count": 43,
   "presets": [
     {
       "file": "HIFIMAN/Edition XS/AutoEQ - Measured by Kuulokenurkka.xml",
@@ -452,6 +452,20 @@
       "warnings": []
     },
     {
+      "file": "SIMGOT/EW300/AutoEQ - Measured by Kazi.xml",
+      "opra_eq_id": "simgot_audio:ew300::autoeq_kazi",
+      "opra_product_id": "simgot_audio::ew300",
+      "vendor": "Simgot Audio",
+      "product": "EW300",
+      "author": "AutoEQ",
+      "details": "Measured by Kazi",
+      "source_link": null,
+      "preamp_db": -2,
+      "opra_band_count": 10,
+      "uapp_band_count": 10,
+      "warnings": []
+    },
+    {
       "file": "SIMGOT/EW300/DSP/AutoEQ - Measured by Jaytiss.xml",
       "opra_eq_id": "simgot_audio:ew300_dsp::autoeq_jaytiss",
       "opra_product_id": "simgot_audio::ew300_dsp",
@@ -590,6 +604,44 @@
       "opra_band_count": 10,
       "uapp_band_count": 10,
       "warnings": []
+    }
+  ],
+  "coverage": [
+    {
+      "vendor_id": "hifiman",
+      "logical_product": "Edition XS",
+      "mode": "complete",
+      "opra_parametric_profiles": 17,
+      "matched_profiles": 17,
+      "duplicate_profiles_covered": 0,
+      "unmatched_profiles": []
+    },
+    {
+      "vendor_id": "sennheiser",
+      "logical_product": "HD 650 / HD650",
+      "mode": "complete",
+      "opra_parametric_profiles": 16,
+      "matched_profiles": 15,
+      "duplicate_profiles_covered": 1,
+      "unmatched_profiles": []
+    },
+    {
+      "vendor_id": "simgot_audio",
+      "logical_product": "EW300",
+      "mode": "complete",
+      "opra_parametric_profiles": 9,
+      "matched_profiles": 9,
+      "duplicate_profiles_covered": 0,
+      "unmatched_profiles": []
+    },
+    {
+      "vendor_id": "simgot_audio",
+      "logical_product": "EW300 DSP",
+      "mode": "complete",
+      "opra_parametric_profiles": 2,
+      "matched_profiles": 2,
+      "duplicate_profiles_covered": 0,
+      "unmatched_profiles": []
     }
   ],
   "errors": []
