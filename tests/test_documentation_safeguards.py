@@ -6,15 +6,38 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class DocumentationSafeguardTests(unittest.TestCase):
-    def test_chatgpt_instructions_require_authoritative_eq_inventory(self):
-        text = (ROOT / "docs/CHATGPT_PROJECT_INSTRUCTIONS.md").read_text(encoding="utf-8")
+    def test_project_bootstrap_fits_chatgpt_project_limit(self):
+        path = ROOT / "docs/CHATGPT_PROJECT_INSTRUCTIONS.md"
+        text = path.read_text(encoding="utf-8")
+        self.assertLess(
+            len(text),
+            8000,
+            "Paste-ready ChatGPT Project Instructions must remain below 8000 characters.",
+        )
+        required = [
+            "docs/CHATGPT_MAINTENANCE_RUNBOOK.md",
+            "GitHub search is discovery-only",
+            "database/vendors/<vendor_id>/products/<product_folder>/eq/",
+            "database_v1.jsonl",
+            "STOP before approval/config changes",
+            "Import all",
+            "Import only",
+            "Import all except",
+        ]
+        for phrase in required:
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, text)
+
+    def test_detailed_runbook_requires_authoritative_eq_inventory(self):
+        text = (ROOT / "docs/CHATGPT_MAINTENANCE_RUNBOOK.md").read_text(encoding="utf-8")
         required = [
             "GitHub search is discovery-only",
             "database/vendors/<vendor_id>/products/<product_folder>/eq/",
             "database_v1.jsonl",
-            "Do not use GitHub code-search results to count EQ profiles",
-            "Stop before editing config",
+            "Stop before editing `config/targets.json`",
             "Similar-product safeguard",
+            "Import all except selected EQs",
+            "exclude_eq_ids",
         ]
         for phrase in required:
             with self.subTest(phrase=phrase):
