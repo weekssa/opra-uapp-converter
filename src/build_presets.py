@@ -191,7 +191,7 @@ def write_presets(source: str, config_path: Path, output_root: Path) -> dict[str
     vendors, products, eqs = index_database(read_jsonl(source))
 
     candidates: list[tuple[Target, str, dict[str, Any], str, dict[str, Any]]] = []
-    matched_counts = {target.output_path: 0 for target in targets}
+    matched_counts = [0 for _ in targets]
     for eq_entry in eqs:
         eq_id = eq_entry["id"]
         eq = eq_entry["data"]
@@ -201,9 +201,9 @@ def write_presets(source: str, config_path: Path, output_root: Path) -> dict[str
         product = products.get(product_id)
         if not product:
             continue
-        for target in targets:
+        for target_index, target in enumerate(targets):
             if target_matches(target, product, eq_id, eq):
-                matched_counts[target.output_path] += 1
+                matched_counts[target_index] += 1
                 candidates.append((target, eq_id, eq, product_id, product))
 
     if output_root.exists():
@@ -251,9 +251,13 @@ def write_presets(source: str, config_path: Path, output_root: Path) -> dict[str
         except (KeyError, TypeError, ValueError) as exc:
             errors.append(f"{eq_id}: {exc}")
 
-    missing = [path for path, count in matched_counts.items() if count == 0]
+    missing = [target for target, count in zip(targets, matched_counts) if count == 0]
     if missing:
-        errors.extend(f"No matching OPRA EQ entries found for configured output {path}" for path in missing)
+        errors.extend(
+            f"No matching OPRA EQ entries found for configured target "
+            f"{target.vendor_id} / {target.product_name} -> {target.output_path}"
+            for target in missing
+        )
 
     manifest = {
         "opra_source": source,
