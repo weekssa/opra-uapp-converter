@@ -11,7 +11,6 @@ import shutil
 import sys
 import urllib.request
 from dataclasses import dataclass
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
 from xml.etree import ElementTree as ET
@@ -251,7 +250,6 @@ def write_presets(source: str, config_path: Path, output_root: Path) -> dict[str
         errors.extend(f"No matching OPRA EQ entries found for configured output {path}" for path in missing)
 
     manifest = {
-        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "opra_source": source,
         "opra_attribution": "EQ data from the OPRA project (CC BY-SA 4.0). Preset creators are credited per file in this manifest.",
         "preset_count": len(manifest_entries),
