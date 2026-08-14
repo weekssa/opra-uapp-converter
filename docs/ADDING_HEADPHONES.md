@@ -12,20 +12,22 @@ If you are using your own public fork, complete [`NEW_USER_SETUP.md`](NEW_USER_S
 
 In the ChatGPT Project for this repository, use a request like:
 
-> Add the FiiO FT1 to my OPRA UAPP converter. Find the exact current OPRA vendor/product information, update `config/targets.json`, verify the GitHub Action succeeds, and confirm which UAPP XML presets were generated. Do not change converter code unless the current config format cannot represent the headphone.
+> Add the FiiO FT1 to my OPRA UAPP converter. Find the exact current OPRA vendor/product information, account for every usable parametric EQ profile, update `config/targets.json`, verify the GitHub Action succeeds, and confirm which UAPP XML presets were generated. If a profile or variant cannot be classified confidently, ask me instead of guessing.
 
 ChatGPT should:
 
 1. Inspect OPRA for the exact product.
-2. Check the same vendor for near-duplicate product records whose names differ only by spaces, punctuation, hyphens, capitalization, or similar formatting, and compare their available parametric EQ profiles before choosing one.
-3. Confirm that OPRA actually has parametric EQ data for the selected record.
-4. Read the current `config/targets.json` first.
-5. Add the smallest necessary config entry or entries.
-6. Let GitHub Actions rebuild the preset library.
-7. Verify the workflow succeeded and inspect `output/manifest.json`.
-8. Confirm the generated preset count matches the usable parametric EQ profiles expected from the selected OPRA record (or the expected filtered subset when variants are intentionally filtered).
-9. If Google Drive write actions are connected, immediately create/mirror the new Drive folder/files and update the Drive root `manifest.json`.
-10. Leave the recurring Drive sync as a safety net for later OPRA changes.
+2. Check the same vendor for near-duplicate product records whose names differ only by spaces, punctuation, hyphens, capitalization, or similar formatting.
+3. Inventory **every usable parametric EQ profile** across those formatting-only aliases.
+4. Identify meaningful variants from OPRA IDs/details/metadata. Never infer a variant that OPRA does not identify.
+5. Decide whether all profiles belong together, should be split into variant folders, or require a user choice.
+6. If a profile cannot be confidently assigned, ask the user where they want it rather than placing it in a guessed folder.
+7. Read the current `config/targets.json` first and add the smallest necessary target entries.
+8. Let GitHub Actions rebuild the preset library.
+9. Verify the workflow succeeded and inspect both the generated presets and the manifest `coverage` section.
+10. Confirm there are no unexplained unmatched profiles or overlapping routes.
+11. If Google Drive write actions are connected, immediately mirror the new/changed Drive files and update the Drive root `manifest.json`.
+12. Leave the recurring Drive sync as a safety net for later OPRA changes.
 
 If OPRA does not contain a usable parametric EQ for the headphone, ChatGPT should tell you instead of inventing one.
 
@@ -50,24 +52,34 @@ You need two values:
 - `vendor_id`: the folder name directly under `database/vendors/`
 - `product_name`: the exact `name` value in the product's `info.json`
 
-Example for the existing Edition XS target:
+Example for Edition XS:
 
 - Vendor folder: `hifiman`
 - Product name: `Edition XS`
 
-### Important: check for near-duplicate OPRA product records
+### Important: check formatting-only aliases
 
-Do not stop after finding the first similar-looking product name. OPRA can contain separate records whose names differ only by formatting such as spaces or punctuation.
+Do not stop after finding the first similar-looking product name. OPRA can contain separate records whose names differ only by formatting.
 
-For example, OPRA currently contains both `HD650` and `HD 650` under Sennheiser, and they do not expose the same EQ profile set. Before choosing a `product_name`, inspect every near-identical candidate's `eq/` directory and compare the available parametric EQ profiles.
+For example, OPRA currently contains both `HD650` and `HD 650` under Sennheiser. They expose different profile sets. The converter therefore treats names that normalize to the same letters/numbers as one logical product for **coverage validation**.
 
-If you cannot tell which candidate represents the requested headphone, do not guess.
+That does not mean every similar name is automatically the same physical product. If two records normalize together but you cannot determine whether they should be combined, stop and ask the user rather than guessing.
 
-## 2. Edit `config/targets.json`
+## 2. Inventory the complete profile set
 
-Open `config/targets.json` in this repository and add an object inside the `targets` array.
+Before writing config, list all usable `parametric_eq` entries for the logical product and note:
 
-Basic example:
+- exact OPRA EQ ID;
+- author;
+- details/measurement text;
+- whether the profile identifies a variant such as Gold/Silver, pad condition, nozzle, revision, or other tuning distinction;
+- whether an apparently duplicated profile is actually identical to one in another formatting-only alias.
+
+The default goal is complete coverage. Every usable parametric profile must either be routed to a target or be an exact semantic duplicate of an imported profile.
+
+## 3. Edit `config/targets.json`
+
+### Simple product: import everything together
 
 ```json
 {
@@ -77,18 +89,11 @@ Basic example:
 }
 ```
 
-### What each field means
+When there are no filters, every parametric EQ for that exact OPRA product record is selected.
 
-- `vendor_id`: exact OPRA vendor folder/id.
-- `product_name`: exact OPRA product name.
-- `output_path`: folder to create under both GitHub `output/` and Google Drive `OPRA UAPP Presets/`.
-- `include_terms`: optional list used when one OPRA product contains identifiable variants and you want separate folders.
+### Identifiable variants
 
-If `include_terms` is omitted, every parametric EQ profile for that product is included.
-
-## 3. Variant example
-
-The SIMGOT EW300 uses one OPRA product with Gold and Silver measurement variants, so it has two target entries:
+Use `include_terms` when OPRA itself clearly identifies variants in EQ IDs, author text, or details:
 
 ```json
 {
@@ -105,85 +110,129 @@ The SIMGOT EW300 uses one OPRA product with Gold and Silver measurement variants
 }
 ```
 
-`include_terms` is matched against the OPRA EQ id, author, and details text. A preset is included when any configured term is present.
+Variant rules must be mutually exclusive. If one OPRA profile matches multiple output folders, the build fails rather than duplicating it silently.
 
-Use variant filtering only when it is actually needed. For most headphones, omit `include_terms`.
+### Known one-off profile in the model root
 
-## 4. Save the config change
+Use `include_eq_ids` when a specific known profile belongs directly in the model root while sibling profiles are split into variants:
 
-When `config/targets.json` changes on the `main` branch, the `Update OPRA presets` GitHub Action runs automatically **after Actions has been enabled for that repository/fork**.
+```json
+{
+  "vendor_id": "simgot_audio",
+  "product_name": "EW300",
+  "include_eq_ids": ["simgot_audio:ew300::autoeq_kazi"],
+  "output_path": "SIMGOT/EW300"
+}
+```
+
+This is intentionally narrow. If OPRA later adds another unclassified EW300 profile, that new profile will **not** be silently dumped into the root. The coverage check will fail until someone decides where it belongs.
+
+### Intentional subset only
+
+If the user explicitly asks for only part of a product's profile set, mark that intent:
+
+```json
+{
+  "vendor_id": "example",
+  "product_name": "Model",
+  "include_terms": ["red"],
+  "allow_partial": true,
+  "output_path": "Example/Model/Red"
+}
+```
+
+Use `allow_partial` only for a deliberate subset request. Do **not** add it merely to bypass an unexplained coverage error.
+
+### Config field reference
+
+- `vendor_id`: exact OPRA vendor id.
+- `product_name`: exact OPRA product name for this target entry.
+- `output_path`: relative GitHub/Drive folder.
+- `include_terms`: optional case-insensitive substring filters against OPRA EQ id, author, and details.
+- `include_eq_ids`: optional exact OPRA EQ IDs for precise routing.
+- `allow_partial`: optional boolean. Default `false`; when `true`, unmatched profiles for that logical product are allowed because the user intentionally requested a subset.
+
+## 4. Understand the automatic coverage checks
+
+For every configured logical product, the converter:
+
+1. normalizes formatting-only product names (spaces/punctuation/case) to discover possible aliases;
+2. gathers every parametric EQ across those aliases;
+3. checks which EQs are routed by the config;
+4. treats an unmatched alias EQ as covered only when its author/details/filter parameters are semantically identical to an imported EQ;
+5. fails if any non-duplicate EQ is left unmatched, unless the logical product is explicitly partial;
+6. fails if one EQ is routed to multiple different output folders.
+
+This safeguard is what prevents the original `HD650` / `HD 650` type of omission from happening silently again.
+
+## 5. Save the config and check the build
+
+When `config/targets.json` changes on `main`, the `Update OPRA presets` GitHub Action runs automatically after Actions has been enabled for that repository/fork.
 
 It will:
 
-1. Run the converter tests.
-2. Download the current OPRA database.
-3. Generate the target XML presets.
-4. Fail if the target matches no OPRA EQ profiles.
-5. Fail if a required filter type cannot be converted safely.
-6. Update `output/manifest.json` and XML files only when the actual output changed.
+1. regenerate documentation;
+2. run converter tests;
+3. download the current OPRA database;
+4. validate target matching, logical-product coverage, duplicate aliases, and overlapping routes;
+5. generate the XML library;
+6. update `output/manifest.json` and XML files only when actual output changed.
 
-## 5. Check the result
+A red coverage failure is a request for classification, not permission to weaken the validation.
 
-Open:
+## 6. Inspect `output/manifest.json`
 
-`Actions → Update OPRA presets`
+The manifest shows per-preset metadata plus a top-level `coverage` section.
 
-The latest run should be green.
+For each logical product, check:
 
-Then inspect:
+- `mode`: `complete` or `partial`;
+- `opra_parametric_profiles`;
+- `matched_profiles`;
+- `duplicate_profiles_covered`;
+- `unmatched_profiles`.
 
-`output/manifest.json`
+For a normal complete addition, `unmatched_profiles` must be empty.
 
-Search for your headphone. The manifest shows:
-
-- XML filename
-- OPRA EQ id
-- manufacturer/product
-- author
-- tuning/measurement details
-- source link when available
-- preamp
-- source band count
-- UAPP band count
-- conversion warnings
-
-Before considering the addition complete, compare the number of generated files for that target with the number of usable parametric EQ profiles you found in the selected OPRA product. If the counts do not match, investigate the discrepancy before syncing Drive.
-
-## 6. Google Drive sync
+## 7. Google Drive sync
 
 GitHub does not receive your Google credentials and does not directly write to Drive.
 
-When ChatGPT has Google Drive write actions connected, it can mirror the generated files into your private Drive root:
+When ChatGPT has Google Drive write actions connected, it mirrors generated files under:
 
 `Google Drive / OPRA UAPP Presets /`
 
-For example:
+A model root can contain XML files directly while also containing managed variant subfolders. For example:
 
-`"output_path": "FiiO/FT1"`
+```text
+OPRA UAPP Presets/
+└── SIMGOT/
+    └── EW300/
+        ├── AutoEQ - Measured by Kazi.xml
+        ├── Gold/
+        ├── Silver/
+        └── DSP/
+```
 
-becomes:
-
-`Google Drive / OPRA UAPP Presets / FiiO / FT1 /`
-
-The sync creates missing folders, adds/updates the generated XML files, removes obsolete XML files only from folders managed by this project, and updates the root `manifest.json`.
-
-Your Drive folder does not need to be public or shared with GitHub.
+The sync adds/updates generated XML files, removes obsolete generated XML files only within managed locations, preserves unrelated Drive content, and updates the root `manifest.json`.
 
 ## Removing a headphone
 
-Delete its target object from `config/targets.json` and save the change.
+Delete the applicable target object(s) from `config/targets.json` and save the change.
 
-GitHub Actions will regenerate the output without that target. The Drive sync will mirror the currently configured managed folders. If you intentionally want an old Drive folder removed entirely, ask the ChatGPT Project to clean it up so unrelated Drive content is not accidentally deleted.
+If multiple entries represent aliases or variants of one model, remove the whole intended logical set unless you specifically want to keep a subset. Rebuild first, then mirror the resulting managed changes to Drive.
 
 ## Important rules
 
-- Never invent OPRA product names or vendor ids.
-- Always check for near-duplicate OPRA product records before selecting a target.
-- Verify the expected OPRA parametric profile count against the generated manifest before declaring an addition successful.
+- Never invent OPRA product names, IDs, variants, or EQ profiles.
+- Always inventory formatting-only OPRA aliases before selecting targets.
+- Complete coverage is the default.
+- Ask the user when classification is genuinely ambiguous; do not guess a folder.
+- Use exact `include_eq_ids` for one-off routing when that is safer than a broad text filter.
+- Use `allow_partial` only when the user explicitly requests a subset.
+- Never weaken coverage validation merely to make a build green.
 - Never manually edit generated XML files as the normal workflow.
-- Generated files under `output/` should come from the converter.
 - Preserve OPRA and individual EQ creator attribution.
-- If a build fails after adding a headphone, inspect the error before changing converter behavior.
 - Do not silently drop unsupported filter types.
 - UAPP/ToneBoosters is limited to 10 bands in this converter. If OPRA provides more, OPRA's priority order is used and the manifest records a warning.
 - Never commit Google OAuth tokens, service-account keys, GitHub personal access tokens, or other credentials to this repository.
