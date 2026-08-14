@@ -14,6 +14,7 @@ class DocumentationSafeguardTests(unittest.TestCase):
             "database_v1.jsonl",
             "Do not use GitHub code-search results to count EQ profiles",
             "Stop before editing config",
+            "Similar-product safeguard",
         ]
         for phrase in required:
             with self.subTest(phrase=phrase):
