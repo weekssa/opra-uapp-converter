@@ -6,6 +6,8 @@ This project is designed so normal headphone additions require editing only one 
 
 You do **not** need to change the converter code for a normal OPRA headphone addition.
 
+If you are using your own public fork, complete [`NEW_USER_SETUP.md`](NEW_USER_SETUP.md) first so GitHub Actions is enabled for your fork and ChatGPT is connected to your own GitHub repository and Google Drive.
+
 ## Easiest method: ask the ChatGPT Project
 
 In the ChatGPT Project for this repository, use a request like:
@@ -20,7 +22,8 @@ ChatGPT should:
 4. Add the smallest necessary config entry or entries.
 5. Let GitHub Actions rebuild the preset library.
 6. Verify the workflow succeeded and inspect `output/manifest.json`.
-7. Let the scheduled Drive sync create/mirror the new folder automatically.
+7. If Google Drive write actions are connected, immediately create/mirror the new Drive folder/files.
+8. Leave the recurring Drive sync as a safety net for later OPRA changes.
 
 If OPRA does not contain a usable parametric EQ for the headphone, ChatGPT should tell you instead of inventing one.
 
@@ -98,7 +101,7 @@ Use variant filtering only when it is actually needed. For most headphones, omit
 
 ## 4. Save the config change
 
-When `config/targets.json` changes on the `main` branch, the `Update OPRA presets` GitHub Action runs automatically.
+When `config/targets.json` changes on the `main` branch, the `Update OPRA presets` GitHub Action runs automatically **after Actions has been enabled for that repository/fork**.
 
 It will:
 
@@ -134,11 +137,11 @@ Search for your headphone. The manifest shows:
 - UAPP band count
 - conversion warnings
 
-## 6. Google Drive happens automatically
+## 6. Google Drive sync
 
-You do not need to create the Drive folder manually.
+GitHub does not receive your Google credentials and does not directly write to Drive.
 
-The scheduled ChatGPT Drive sync reads `config/targets.json` and `output/manifest.json`. Every configured `output_path` is treated as a managed folder underneath:
+When ChatGPT has Google Drive write actions connected, it can mirror the generated files into your private Drive root:
 
 `Google Drive / OPRA UAPP Presets /`
 
@@ -151,6 +154,8 @@ becomes:
 `Google Drive / OPRA UAPP Presets / FiiO / FT1 /`
 
 The sync creates missing folders, adds/updates the generated XML files, and removes obsolete XML files only from folders managed by this project.
+
+Your Drive folder does not need to be public or shared with GitHub.
 
 ## Removing a headphone
 
@@ -167,3 +172,4 @@ GitHub Actions will regenerate the output without that target. The Drive sync wi
 - If a build fails after adding a headphone, inspect the error before changing converter behavior.
 - Do not silently drop unsupported filter types.
 - UAPP/ToneBoosters is limited to 10 bands in this converter. If OPRA provides more, OPRA's priority order is used and the manifest records a warning.
+- Never commit Google OAuth tokens, service-account keys, GitHub personal access tokens, or other credentials to this repository.
