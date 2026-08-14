@@ -657,6 +657,7 @@
       "opra_parametric_profiles": 17,
       "matched_profiles": 17,
       "duplicate_profiles_covered": 0,
+      "explicitly_excluded_profiles": [],
       "unmatched_profiles": []
     },
     {
@@ -666,6 +667,7 @@
       "opra_parametric_profiles": 16,
       "matched_profiles": 15,
       "duplicate_profiles_covered": 1,
+      "explicitly_excluded_profiles": [],
       "unmatched_profiles": []
     },
     {
@@ -675,6 +677,7 @@
       "opra_parametric_profiles": 9,
       "matched_profiles": 9,
       "duplicate_profiles_covered": 0,
+      "explicitly_excluded_profiles": [],
       "unmatched_profiles": []
     },
     {
@@ -684,6 +687,7 @@
       "opra_parametric_profiles": 2,
       "matched_profiles": 2,
       "duplicate_profiles_covered": 0,
+      "explicitly_excluded_profiles": [],
       "unmatched_profiles": []
     }
   ],
