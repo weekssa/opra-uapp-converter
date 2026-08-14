@@ -21,6 +21,11 @@
       "vendor_id": "simgot_audio",
       "product_name": "EW300 DSP",
       "output_path": "SIMGOT/EW300/DSP"
+    },
+    {
+      "vendor_id": "sennheiser",
+      "product_name": "HD650",
+      "output_path": "Sennheiser/HD650"
     }
   ]
 }
