@@ -31,6 +31,9 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Update generated documentation
+        run: python src/update_docs.py
+
       - name: Run tests
         run: python -m unittest discover -s tests -v
 
@@ -45,14 +48,14 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-      - name: Commit updated presets
+      - name: Commit updated presets and documentation
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add output
+          git add output README.md docs/PROJECT_DESCRIPTION.md
           if git diff --cached --quiet; then
-            echo "No OPRA preset changes detected."
+            echo "No OPRA preset or documentation changes detected."
           else
-            git commit -m "Update OPRA presets"
+            git commit -m "Update OPRA presets and documentation"
             git push
           fi
