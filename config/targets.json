@@ -38,6 +38,11 @@
       "vendor_id": "sennheiser",
       "product_name": "HD650",
       "output_path": "Sennheiser/HD650"
+    },
+    {
+      "vendor_id": "sony",
+      "product_name": "WF-1000XM5",
+      "output_path": "Sony/WF-1000XM5"
     }
   ]
 }
