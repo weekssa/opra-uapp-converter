@@ -4,7 +4,8 @@
   "preset_count": 43,
   "presets": [
     {
-      "file": "HIFIMAN/Edition XS/AutoEQ - Measured by Kuulokenurkka.xml",
+      "file": "HIFIMAN/Edition XS/Edition XS - AutoEQ - Kuulokenurkka.xml",
+      "preset_name": "Edition XS - AutoEQ - Kuulokenurkka",
       "opra_eq_id": "hifiman:edition_xs::autoeq_kuulokenurkka",
       "opra_product_id": "hifiman::edition_xs",
       "vendor": "HIFIMAN",
@@ -18,7 +19,8 @@
       "warnings": []
     },
     {
-      "file": "HIFIMAN/Edition XS/AutoEQ - Measured by oratory1990.xml",
+      "file": "HIFIMAN/Edition XS/Edition XS - AutoEQ - oratory1990.xml",
+      "preset_name": "Edition XS - AutoEQ - oratory1990",
       "opra_eq_id": "hifiman:edition_xs::autoeq_oratory1990",
       "opra_product_id": "hifiman::edition_xs",
       "vendor": "HIFIMAN",
@@ -32,7 +34,8 @@
       "warnings": []
     },
     {
-      "file": "HIFIMAN/Edition XS/AutoEQ - Measured by Rtings.xml",
+      "file": "HIFIMAN/Edition XS/Edition XS - AutoEQ - Rtings.xml",
+      "preset_name": "Edition XS - AutoEQ - Rtings",
       "opra_eq_id": "hifiman:edition_xs::autoeq_rtings",
       "opra_product_id": "hifiman::edition_xs",
       "vendor": "HIFIMAN",
@@ -46,7 +49,8 @@
       "warnings": []
     },
     {
-      "file": "HIFIMAN/Edition XS/AutoEQ - Measured by Super Review.xml",
+      "file": "HIFIMAN/Edition XS/Edition XS - AutoEQ - Super Review.xml",
+      "preset_name": "Edition XS - AutoEQ - Super Review",
       "opra_eq_id": "hifiman:edition_xs::autoeq_super_review",
       "opra_product_id": "hifiman::edition_xs",
       "vendor": "HIFIMAN",
@@ -60,7 +64,8 @@
       "warnings": []
     },
     {
-      "file": "HIFIMAN/Edition XS/oratory1990 - Harman Target.xml",
+      "file": "HIFIMAN/Edition XS/Edition XS - oratory1990 - Harman Target.xml",
+      "preset_name": "Edition XS - oratory1990 - Harman Target",
       "opra_eq_id": "hifiman:edition_xs::oratory1990_harman_target",
       "opra_product_id": "hifiman::edition_xs",
       "vendor": "HIFIMAN",
@@ -74,7 +79,8 @@
       "warnings": []
     },
     {
-      "file": "HIFIMAN/Edition XS/Rtings-AutoEQ - HRTF_5128_Diffuse_Field - Consolidated - 10 band.xml",
+      "file": "HIFIMAN/Edition XS/Edition XS - Rtings-AutoEQ - HRTF_5128_Diffuse_Field - Consolidated - 10 band.xml",
+      "preset_name": "Edition XS - Rtings-AutoEQ - HRTF_5128_Diffuse_Field - Consolidated - 10 band",
       "opra_eq_id": "hifiman:edition_xs::rtings_hrtf_5128_diffuse_field_consolidated_parametric_10band",
       "opra_product_id": "hifiman::edition_xs",
       "vendor": "HIFIMAN",
@@ -88,7 +94,8 @@
       "warnings": []
     },
     {
-      "file": "HIFIMAN/Edition XS/Rtings-AutoEQ - HRTF_5128_Diffuse_Field - Consolidated - 5 band.xml",
+      "file": "HIFIMAN/Edition XS/Edition XS - Rtings-AutoEQ - HRTF_5128_Diffuse_Field - Consolidated - 5 band.xml",
+      "preset_name": "Edition XS - Rtings-AutoEQ - HRTF_5128_Diffuse_Field - Consolidated - 5 band",
       "opra_eq_id": "hifiman:edition_xs::rtings_hrtf_5128_diffuse_field_consolidated_parametric_5band",
       "opra_product_id": "hifiman::edition_xs",
       "vendor": "HIFIMAN",
@@ -102,7 +109,8 @@
       "warnings": []
     },
     {
-      "file": "HIFIMAN/Edition XS/Rtings-AutoEQ - Target_Harman_IEM - Consolidated - 10 band.xml",
+      "file": "HIFIMAN/Edition XS/Edition XS - Rtings-AutoEQ - Target_Harman_IEM - Consolidated - 10 band.xml",
+      "preset_name": "Edition XS - Rtings-AutoEQ - Target_Harman_IEM - Consolidated - 10 band",
       "opra_eq_id": "hifiman:edition_xs::rtings_target_harman_iem_consolidated_parametric_10band",
       "opra_product_id": "hifiman::edition_xs",
       "vendor": "HIFIMAN",
@@ -116,7 +124,8 @@
       "warnings": []
     },
     {
-      "file": "HIFIMAN/Edition XS/Rtings-AutoEQ - Target_Harman_IEM - Consolidated - 5 band.xml",
+      "file": "HIFIMAN/Edition XS/Edition XS - Rtings-AutoEQ - Target_Harman_IEM - Consolidated - 5 band.xml",
+      "preset_name": "Edition XS - Rtings-AutoEQ - Target_Harman_IEM - Consolidated - 5 band",
       "opra_eq_id": "hifiman:edition_xs::rtings_target_harman_iem_consolidated_parametric_5band",
       "opra_product_id": "hifiman::edition_xs",
       "vendor": "HIFIMAN",
@@ -130,7 +139,8 @@
       "warnings": []
     },
     {
-      "file": "HIFIMAN/Edition XS/Rtings-AutoEQ - Target_Rtings_com - Consolidated - 10 band.xml",
+      "file": "HIFIMAN/Edition XS/Edition XS - Rtings-AutoEQ - Target_Rtings_com - Consolidated - 10 band.xml",
+      "preset_name": "Edition XS - Rtings-AutoEQ - Target_Rtings_com - Consolidated - 10 band",
       "opra_eq_id": "hifiman:edition_xs::rtings_target_rtings_com_consolidated_parametric_10band",
       "opra_product_id": "hifiman::edition_xs",
       "vendor": "HIFIMAN",
@@ -144,7 +154,8 @@
       "warnings": []
     },
     {
-      "file": "HIFIMAN/Edition XS/Rtings-AutoEQ - Target_Rtings_com - Consolidated - 5 band.xml",
+      "file": "HIFIMAN/Edition XS/Edition XS - Rtings-AutoEQ - Target_Rtings_com - Consolidated - 5 band.xml",
+      "preset_name": "Edition XS - Rtings-AutoEQ - Target_Rtings_com - Consolidated - 5 band",
       "opra_eq_id": "hifiman:edition_xs::rtings_target_rtings_com_consolidated_parametric_5band",
       "opra_product_id": "hifiman::edition_xs",
       "vendor": "HIFIMAN",
@@ -158,7 +169,8 @@
       "warnings": []
     },
     {
-      "file": "HIFIMAN/Edition XS/Rtings-AutoEQ - Target_SenseLab_Aizu - Consolidated - 10 band.xml",
+      "file": "HIFIMAN/Edition XS/Edition XS - Rtings-AutoEQ - Target_SenseLab_Aizu - Consolidated - 10 band.xml",
+      "preset_name": "Edition XS - Rtings-AutoEQ - Target_SenseLab_Aizu - Consolidated - 10 band",
       "opra_eq_id": "hifiman:edition_xs::rtings_target_senselab_aizu_consolidated_parametric_10band",
       "opra_product_id": "hifiman::edition_xs",
       "vendor": "HIFIMAN",
@@ -172,7 +184,8 @@
       "warnings": []
     },
     {
-      "file": "HIFIMAN/Edition XS/Rtings-AutoEQ - Target_SenseLab_Aizu - Consolidated - 5 band.xml",
+      "file": "HIFIMAN/Edition XS/Edition XS - Rtings-AutoEQ - Target_SenseLab_Aizu - Consolidated - 5 band.xml",
+      "preset_name": "Edition XS - Rtings-AutoEQ - Target_SenseLab_Aizu - Consolidated - 5 band",
       "opra_eq_id": "hifiman:edition_xs::rtings_target_senselab_aizu_consolidated_parametric_5band",
       "opra_product_id": "hifiman::edition_xs",
       "vendor": "HIFIMAN",
@@ -186,7 +199,8 @@
       "warnings": []
     },
     {
-      "file": "HIFIMAN/Edition XS/Rtings-AutoEQ - Target_SoundGuys_Consumer - Consolidated - 10 band.xml",
+      "file": "HIFIMAN/Edition XS/Edition XS - Rtings-AutoEQ - Target_SoundGuys_Consumer - Consolidated - 10 band.xml",
+      "preset_name": "Edition XS - Rtings-AutoEQ - Target_SoundGuys_Consumer - Consolidated - 10 band",
       "opra_eq_id": "hifiman:edition_xs::rtings_target_soundguys_consumer_consolidated_parametric_10band",
       "opra_product_id": "hifiman::edition_xs",
       "vendor": "HIFIMAN",
@@ -200,7 +214,8 @@
       "warnings": []
     },
     {
-      "file": "HIFIMAN/Edition XS/Rtings-AutoEQ - Target_SoundGuys_Consumer - Consolidated - 5 band.xml",
+      "file": "HIFIMAN/Edition XS/Edition XS - Rtings-AutoEQ - Target_SoundGuys_Consumer - Consolidated - 5 band.xml",
+      "preset_name": "Edition XS - Rtings-AutoEQ - Target_SoundGuys_Consumer - Consolidated - 5 band",
       "opra_eq_id": "hifiman:edition_xs::rtings_target_soundguys_consumer_consolidated_parametric_5band",
       "opra_product_id": "hifiman::edition_xs",
       "vendor": "HIFIMAN",
@@ -214,7 +229,8 @@
       "warnings": []
     },
     {
-      "file": "HIFIMAN/Edition XS/Rtings-AutoEQ - Target_SoundGuys_Studio - Consolidated - 10 band.xml",
+      "file": "HIFIMAN/Edition XS/Edition XS - Rtings-AutoEQ - Target_SoundGuys_Studio - Consolidated - 10 band.xml",
+      "preset_name": "Edition XS - Rtings-AutoEQ - Target_SoundGuys_Studio - Consolidated - 10 band",
       "opra_eq_id": "hifiman:edition_xs::rtings_target_soundguys_studio_consolidated_parametric_10band",
       "opra_product_id": "hifiman::edition_xs",
       "vendor": "HIFIMAN",
@@ -228,7 +244,8 @@
       "warnings": []
     },
     {
-      "file": "HIFIMAN/Edition XS/Rtings-AutoEQ - Target_SoundGuys_Studio - Consolidated - 5 band.xml",
+      "file": "HIFIMAN/Edition XS/Edition XS - Rtings-AutoEQ - Target_SoundGuys_Studio - Consolidated - 5 band.xml",
+      "preset_name": "Edition XS - Rtings-AutoEQ - Target_SoundGuys_Studio - Consolidated - 5 band",
       "opra_eq_id": "hifiman:edition_xs::rtings_target_soundguys_studio_consolidated_parametric_5band",
       "opra_product_id": "hifiman::edition_xs",
       "vendor": "HIFIMAN",
@@ -242,7 +259,8 @@
       "warnings": []
     },
     {
-      "file": "Sennheiser/HD650/AutoEQ - Measured by Auriculares Argentina.xml",
+      "file": "Sennheiser/HD650/HD650 - AutoEQ - Auriculares Argentina.xml",
+      "preset_name": "HD650 - AutoEQ - Auriculares Argentina",
       "opra_eq_id": "sennheiser:hd_650::autoeq_auriculares_argentina",
       "opra_product_id": "sennheiser::hd_650",
       "vendor": "Sennheiser",
@@ -256,7 +274,8 @@
       "warnings": []
     },
     {
-      "file": "Sennheiser/HD650/AutoEQ - Measured by crinacle (2020).xml",
+      "file": "Sennheiser/HD650/HD650 - AutoEQ - crinacle (2020).xml",
+      "preset_name": "HD650 - AutoEQ - crinacle (2020)",
       "opra_eq_id": "sennheiser:hd_650::autoeq_crinacle_2020",
       "opra_product_id": "sennheiser::hd_650",
       "vendor": "Sennheiser",
@@ -270,7 +289,8 @@
       "warnings": []
     },
     {
-      "file": "Sennheiser/HD650/AutoEQ - Measured by crinacle (2020, worn earpads).xml",
+      "file": "Sennheiser/HD650/HD650 - AutoEQ - crinacle (2020, worn earpads).xml",
+      "preset_name": "HD650 - AutoEQ - crinacle (2020, worn earpads)",
       "opra_eq_id": "sennheiser:hd_650::autoeq_crinacle_2020_worn_earpads",
       "opra_product_id": "sennheiser::hd_650",
       "vendor": "Sennheiser",
@@ -284,7 +304,8 @@
       "warnings": []
     },
     {
-      "file": "Sennheiser/HD650/AutoEQ - Measured by crinacle (pre-2020, semi-worn earpads).xml",
+      "file": "Sennheiser/HD650/HD650 - AutoEQ - crinacle (pre-2020, semi-worn earpads).xml",
+      "preset_name": "HD650 - AutoEQ - crinacle (pre-2020, semi-worn earpads)",
       "opra_eq_id": "sennheiser:hd_650::autoeq_crinacle_pre_2020_semi_worn_earpads",
       "opra_product_id": "sennheiser::hd_650",
       "vendor": "Sennheiser",
@@ -298,7 +319,8 @@
       "warnings": []
     },
     {
-      "file": "Sennheiser/HD650/AutoEQ - Measured by crinacle (pre-2020, worn earpads).xml",
+      "file": "Sennheiser/HD650/HD650 - AutoEQ - crinacle (pre-2020, worn earpads).xml",
+      "preset_name": "HD650 - AutoEQ - crinacle (pre-2020, worn earpads)",
       "opra_eq_id": "sennheiser:hd_650::autoeq_crinacle_pre_2020_worn_earpads",
       "opra_product_id": "sennheiser::hd_650",
       "vendor": "Sennheiser",
@@ -312,7 +334,8 @@
       "warnings": []
     },
     {
-      "file": "Sennheiser/HD650/AutoEQ - Measured by crinacle.xml",
+      "file": "Sennheiser/HD650/HD650 - AutoEQ - crinacle.xml",
+      "preset_name": "HD650 - AutoEQ - crinacle",
       "opra_eq_id": "sennheiser:hd_650::autoeq_crinacle",
       "opra_product_id": "sennheiser::hd_650",
       "vendor": "Sennheiser",
@@ -326,7 +349,8 @@
       "warnings": []
     },
     {
-      "file": "Sennheiser/HD650/AutoEQ - Measured by Headphone.com Legacy (balanced).xml",
+      "file": "Sennheiser/HD650/HD650 - AutoEQ - Headphone.com Legacy (balanced).xml",
+      "preset_name": "HD650 - AutoEQ - Headphone.com Legacy (balanced)",
       "opra_eq_id": "sennheiser:hd_650::autoeq_headphonecom_legacy_balanced",
       "opra_product_id": "sennheiser::hd_650",
       "vendor": "Sennheiser",
@@ -340,7 +364,8 @@
       "warnings": []
     },
     {
-      "file": "Sennheiser/HD650/AutoEQ - Measured by Headphone.com Legacy.xml",
+      "file": "Sennheiser/HD650/HD650 - AutoEQ - Headphone.com Legacy.xml",
+      "preset_name": "HD650 - AutoEQ - Headphone.com Legacy",
       "opra_eq_id": "sennheiser:hd_650::autoeq_headphonecom_legacy",
       "opra_product_id": "sennheiser::hd_650",
       "vendor": "Sennheiser",
@@ -354,7 +379,8 @@
       "warnings": []
     },
     {
-      "file": "Sennheiser/HD650/AutoEQ - Measured by Innerfidelity.xml",
+      "file": "Sennheiser/HD650/HD650 - AutoEQ - Innerfidelity.xml",
+      "preset_name": "HD650 - AutoEQ - Innerfidelity",
       "opra_eq_id": "sennheiser:hd_650::autoeq_innerfidelity",
       "opra_product_id": "sennheiser::hd_650",
       "vendor": "Sennheiser",
@@ -368,7 +394,8 @@
       "warnings": []
     },
     {
-      "file": "Sennheiser/HD650/AutoEQ - Measured by Kuulokenurkka.xml",
+      "file": "Sennheiser/HD650/HD650 - AutoEQ - Kuulokenurkka.xml",
+      "preset_name": "HD650 - AutoEQ - Kuulokenurkka",
       "opra_eq_id": "sennheiser:hd_650::autoeq_kuulokenurkka",
       "opra_product_id": "sennheiser::hd_650",
       "vendor": "Sennheiser",
@@ -382,7 +409,8 @@
       "warnings": []
     },
     {
-      "file": "Sennheiser/HD650/AutoEQ - Measured by oratory1990.xml",
+      "file": "Sennheiser/HD650/HD650 - AutoEQ - oratory1990.xml",
+      "preset_name": "HD650 - AutoEQ - oratory1990",
       "opra_eq_id": "sennheiser:hd_650::autoeq_oratory1990",
       "opra_product_id": "sennheiser::hd_650",
       "vendor": "Sennheiser",
@@ -396,7 +424,8 @@
       "warnings": []
     },
     {
-      "file": "Sennheiser/HD650/AutoEQ - Measured by Rtings.xml",
+      "file": "Sennheiser/HD650/HD650 - AutoEQ - Rtings.xml",
+      "preset_name": "HD650 - AutoEQ - Rtings",
       "opra_eq_id": "sennheiser:hd_650::autoeq_rtings",
       "opra_product_id": "sennheiser::hd_650",
       "vendor": "Sennheiser",
@@ -410,7 +439,8 @@
       "warnings": []
     },
     {
-      "file": "Sennheiser/HD650/oratory1990 - Harman Target - 10 band graphic EQ.xml",
+      "file": "Sennheiser/HD650/HD650 - oratory1990 - Harman Target - 10 band graphic EQ.xml",
+      "preset_name": "HD650 - oratory1990 - Harman Target - 10 band graphic EQ",
       "opra_eq_id": "sennheiser:hd650::oratory1990_harman_target_10_band_graphic_eq",
       "opra_product_id": "sennheiser::hd650",
       "vendor": "Sennheiser",
@@ -424,7 +454,8 @@
       "warnings": []
     },
     {
-      "file": "Sennheiser/HD650/oratory1990 - Harman Target - 6 Band EQ.xml",
+      "file": "Sennheiser/HD650/HD650 - oratory1990 - Harman Target - 6 Band EQ.xml",
+      "preset_name": "HD650 - oratory1990 - Harman Target - 6 Band EQ",
       "opra_eq_id": "sennheiser:hd650::oratory1990_harman_target_6_band_eq",
       "opra_product_id": "sennheiser::hd650",
       "vendor": "Sennheiser",
@@ -438,7 +469,8 @@
       "warnings": []
     },
     {
-      "file": "Sennheiser/HD650/oratory1990 - Harman Target.xml",
+      "file": "Sennheiser/HD650/HD650 - oratory1990 - Harman Target.xml",
+      "preset_name": "HD650 - oratory1990 - Harman Target",
       "opra_eq_id": "sennheiser:hd650::oratory1990_harman_target",
       "opra_product_id": "sennheiser::hd650",
       "vendor": "Sennheiser",
@@ -452,21 +484,8 @@
       "warnings": []
     },
     {
-      "file": "SIMGOT/EW300/AutoEQ - Measured by Kazi.xml",
-      "opra_eq_id": "simgot_audio:ew300::autoeq_kazi",
-      "opra_product_id": "simgot_audio::ew300",
-      "vendor": "Simgot Audio",
-      "product": "EW300",
-      "author": "AutoEQ",
-      "details": "Measured by Kazi",
-      "source_link": null,
-      "preamp_db": -2,
-      "opra_band_count": 10,
-      "uapp_band_count": 10,
-      "warnings": []
-    },
-    {
-      "file": "SIMGOT/EW300/DSP/AutoEQ - Measured by Jaytiss.xml",
+      "file": "SIMGOT/EW300/DSP/EW300 DSP - AutoEQ - Jaytiss.xml",
+      "preset_name": "EW300 DSP - AutoEQ - Jaytiss",
       "opra_eq_id": "simgot_audio:ew300_dsp::autoeq_jaytiss",
       "opra_product_id": "simgot_audio::ew300_dsp",
       "vendor": "Simgot Audio",
@@ -480,7 +499,8 @@
       "warnings": []
     },
     {
-      "file": "SIMGOT/EW300/DSP/AutoEQ - Measured by Kazi.xml",
+      "file": "SIMGOT/EW300/DSP/EW300 DSP - AutoEQ - Kazi.xml",
+      "preset_name": "EW300 DSP - AutoEQ - Kazi",
       "opra_eq_id": "simgot_audio:ew300_dsp::autoeq_kazi",
       "opra_product_id": "simgot_audio::ew300_dsp",
       "vendor": "Simgot Audio",
@@ -494,7 +514,23 @@
       "warnings": []
     },
     {
-      "file": "SIMGOT/EW300/Gold/AutoEQ - Measured by Fahryst (gold).xml",
+      "file": "SIMGOT/EW300/EW300 - AutoEQ - Kazi.xml",
+      "preset_name": "EW300 - AutoEQ - Kazi",
+      "opra_eq_id": "simgot_audio:ew300::autoeq_kazi",
+      "opra_product_id": "simgot_audio::ew300",
+      "vendor": "Simgot Audio",
+      "product": "EW300",
+      "author": "AutoEQ",
+      "details": "Measured by Kazi",
+      "source_link": null,
+      "preamp_db": -2,
+      "opra_band_count": 10,
+      "uapp_band_count": 10,
+      "warnings": []
+    },
+    {
+      "file": "SIMGOT/EW300/Gold/EW300 Gold - AutoEQ - Fahryst.xml",
+      "preset_name": "EW300 Gold - AutoEQ - Fahryst",
       "opra_eq_id": "simgot_audio:ew300::autoeq_fahryst_gold",
       "opra_product_id": "simgot_audio::ew300",
       "vendor": "Simgot Audio",
@@ -508,7 +544,8 @@
       "warnings": []
     },
     {
-      "file": "SIMGOT/EW300/Gold/AutoEQ - Measured by Filk (gold).xml",
+      "file": "SIMGOT/EW300/Gold/EW300 Gold - AutoEQ - Filk.xml",
+      "preset_name": "EW300 Gold - AutoEQ - Filk",
       "opra_eq_id": "simgot_audio:ew300::autoeq_filk_gold",
       "opra_product_id": "simgot_audio::ew300",
       "vendor": "Simgot Audio",
@@ -522,7 +559,8 @@
       "warnings": []
     },
     {
-      "file": "SIMGOT/EW300/Gold/AutoEQ - Measured by Hi End Portable (gold).xml",
+      "file": "SIMGOT/EW300/Gold/EW300 Gold - AutoEQ - Hi End Portable.xml",
+      "preset_name": "EW300 Gold - AutoEQ - Hi End Portable",
       "opra_eq_id": "simgot_audio:ew300::autoeq_hi_end_portable_gold",
       "opra_product_id": "simgot_audio::ew300",
       "vendor": "Simgot Audio",
@@ -536,7 +574,8 @@
       "warnings": []
     },
     {
-      "file": "SIMGOT/EW300/Gold/AutoEQ - Measured by RikudouGoku (gold).xml",
+      "file": "SIMGOT/EW300/Gold/EW300 Gold - AutoEQ - RikudouGoku.xml",
+      "preset_name": "EW300 Gold - AutoEQ - RikudouGoku",
       "opra_eq_id": "simgot_audio:ew300::autoeq_rikudougoku_gold",
       "opra_product_id": "simgot_audio::ew300",
       "vendor": "Simgot Audio",
@@ -550,7 +589,8 @@
       "warnings": []
     },
     {
-      "file": "SIMGOT/EW300/Silver/AutoEQ - Measured by Fahryst (silver).xml",
+      "file": "SIMGOT/EW300/Silver/EW300 Silver - AutoEQ - Fahryst.xml",
+      "preset_name": "EW300 Silver - AutoEQ - Fahryst",
       "opra_eq_id": "simgot_audio:ew300::autoeq_fahryst_silver",
       "opra_product_id": "simgot_audio::ew300",
       "vendor": "Simgot Audio",
@@ -564,7 +604,8 @@
       "warnings": []
     },
     {
-      "file": "SIMGOT/EW300/Silver/AutoEQ - Measured by Filk (silver).xml",
+      "file": "SIMGOT/EW300/Silver/EW300 Silver - AutoEQ - Filk.xml",
+      "preset_name": "EW300 Silver - AutoEQ - Filk",
       "opra_eq_id": "simgot_audio:ew300::autoeq_filk_silver",
       "opra_product_id": "simgot_audio::ew300",
       "vendor": "Simgot Audio",
@@ -578,7 +619,8 @@
       "warnings": []
     },
     {
-      "file": "SIMGOT/EW300/Silver/AutoEQ - Measured by Hi End Portable (silver).xml",
+      "file": "SIMGOT/EW300/Silver/EW300 Silver - AutoEQ - Hi End Portable.xml",
+      "preset_name": "EW300 Silver - AutoEQ - Hi End Portable",
       "opra_eq_id": "simgot_audio:ew300::autoeq_hi_end_portable_silver",
       "opra_product_id": "simgot_audio::ew300",
       "vendor": "Simgot Audio",
@@ -592,7 +634,8 @@
       "warnings": []
     },
     {
-      "file": "SIMGOT/EW300/Silver/AutoEQ - Measured by RikudouGoku (silver).xml",
+      "file": "SIMGOT/EW300/Silver/EW300 Silver - AutoEQ - RikudouGoku.xml",
+      "preset_name": "EW300 Silver - AutoEQ - RikudouGoku",
       "opra_eq_id": "simgot_audio:ew300::autoeq_rikudougoku_silver",
       "opra_product_id": "simgot_audio::ew300",
       "vendor": "Simgot Audio",
