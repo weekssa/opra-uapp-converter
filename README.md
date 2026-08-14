@@ -5,7 +5,7 @@ Automatically converts selected [OPRA](https://github.com/opra-project/OPRA) par
 ## Project description
 
 <!-- PROJECT_DESCRIPTION_START -->
-OPRA → UAPP/ToneBoosters EQ converter with automatic Google Drive sync. Configured: HIFIMAN Edition XS; SIMGOT EW300; SIMGOT EW300 Gold; SIMGOT EW300 Silver; SIMGOT EW300 DSP; Sennheiser HD650
+OPRA → UAPP/ToneBoosters EQ converter with automatic Google Drive sync. Configured: HIFIMAN Edition XS; SIMGOT EW300; SIMGOT EW300 Gold; SIMGOT EW300 Silver; SIMGOT EW300 DSP; Sennheiser HD650; Sony WF-1000XM5
 <!-- PROJECT_DESCRIPTION_END -->
 
 The description above is generated from `config/targets.json`. The same generated text is also saved in [`docs/PROJECT_DESCRIPTION.md`](docs/PROJECT_DESCRIPTION.md) for easy copy/paste into repository or project metadata.
@@ -19,6 +19,7 @@ The description above is generated from `config/targets.json`. The same generate
 - SIMGOT EW300 Silver
 - SIMGOT EW300 DSP
 - Sennheiser HD650
+- Sony WF-1000XM5
 <!-- SUPPORTED_HEADPHONES_END -->
 
 This list is generated automatically from `config/targets.json`, so adding or removing a target updates the documentation on the next GitHub build.
