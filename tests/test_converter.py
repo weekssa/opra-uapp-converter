@@ -43,6 +43,28 @@ class ConverterTests(unittest.TestCase):
         self.assertEqual(mod.logical_product_name("HD 650"), mod.logical_product_name("HD650"))
         self.assertEqual(mod.logical_product_name("Model-X"), mod.logical_product_name("Model X"))
 
+    def test_preset_display_name_is_headphone_first(self):
+        target = mod.Target("sennheiser", "HD650", "Sennheiser/HD650")
+        eq = {"author": "oratory1990", "details": "Harman Target"}
+        self.assertEqual(
+            mod.preset_display_name(target, eq),
+            "HD650 - oratory1990 - Harman Target",
+        )
+
+    def test_variant_display_name_compacts_redundant_measurement_text(self):
+        target = mod.Target("simgot_audio", "EW300", "SIMGOT/EW300/Gold")
+        eq = {"author": "AutoEQ", "details": "Measured by Fahryst (gold)"}
+        self.assertEqual(
+            mod.preset_display_name(target, eq),
+            "EW300 Gold - AutoEQ - Fahryst",
+        )
+        self.assertEqual(eq["details"], "Measured by Fahryst (gold)")
+
+    def test_root_display_name_keeps_model_without_fake_variant(self):
+        target = mod.Target("simgot_audio", "EW300", "SIMGOT/EW300")
+        eq = {"author": "AutoEQ", "details": "Measured by Kazi"}
+        self.assertEqual(mod.preset_display_name(target, eq), "EW300 - AutoEQ - Kazi")
+
     def test_end_to_end_jsonl_selection(self):
         entries = [
             {"type": "vendor", "id": "hifiman", "data": {"name": "HIFIMAN"}},
@@ -74,14 +96,21 @@ class ConverterTests(unittest.TestCase):
             output = td / "output"
             manifest = mod.write_presets(str(source), config_path, output)
             self.assertEqual(manifest["preset_count"], 5)
-            self.assertTrue((output / "HIFIMAN/Edition XS/oratory1990 - Harman Target.xml").exists())
-            self.assertTrue((output / "SIMGOT/EW300/AutoEQ - Measured by Kazi.xml").exists())
-            self.assertTrue((output / "SIMGOT/EW300/Gold/AutoEQ - Measured by X (gold).xml").exists())
-            self.assertTrue((output / "SIMGOT/EW300/Silver/AutoEQ - Measured by X (silver).xml").exists())
-            self.assertTrue((output / "SIMGOT/EW300/DSP/AutoEQ - Measured by Jaytiss.xml").exists())
+            self.assertTrue((output / "HIFIMAN/Edition XS/Edition XS - oratory1990 - Harman Target.xml").exists())
+            self.assertTrue((output / "SIMGOT/EW300/EW300 - AutoEQ - Kazi.xml").exists())
+            self.assertTrue((output / "SIMGOT/EW300/Gold/EW300 Gold - AutoEQ - X.xml").exists())
+            self.assertTrue((output / "SIMGOT/EW300/Silver/EW300 Silver - AutoEQ - X.xml").exists())
+            self.assertTrue((output / "SIMGOT/EW300/DSP/EW300 DSP - AutoEQ - Jaytiss.xml").exists())
             ew300_coverage = next(item for item in manifest["coverage"] if item["logical_product"] == "EW300")
             self.assertEqual(ew300_coverage["mode"], "complete")
             self.assertEqual(ew300_coverage["unmatched_profiles"], [])
+            kazi = next(item for item in manifest["presets"] if item["opra_eq_id"] == "simgot_audio:ew300::autoeq_kazi")
+            self.assertEqual(kazi["preset_name"], "EW300 - AutoEQ - Kazi")
+            self.assertEqual(kazi["details"], "Measured by Kazi")
+            xml = (output / kazi["file"]).read_text(encoding="iso-8859-1")
+            root = ET.fromstring(xml.split("?>", 1)[1])
+            self.assertEqual(root.find("PresetInfo").attrib["Name"], kazi["preset_name"])
+            self.assertEqual(Path(kazi["file"]).stem, kazi["preset_name"])
 
     def test_duplicate_human_names_get_band_count_suffixes(self):
         bands5 = [{"type": "peak_dip", "frequency": 100 + i * 100, "gain_db": 0, "q": 1} for i in range(5)]
@@ -102,8 +131,8 @@ class ConverterTests(unittest.TestCase):
             output = td / "output"
             manifest = mod.write_presets(str(source), config_path, output)
             self.assertEqual(manifest["preset_count"], 2)
-            self.assertTrue((output / "HIFIMAN/Edition XS/Rtings-AutoEQ - Target - Consolidated - 5 band.xml").exists())
-            self.assertTrue((output / "HIFIMAN/Edition XS/Rtings-AutoEQ - Target - Consolidated - 10 band.xml").exists())
+            self.assertTrue((output / "HIFIMAN/Edition XS/Edition XS - Rtings-AutoEQ - Target - Consolidated - 5 band.xml").exists())
+            self.assertTrue((output / "HIFIMAN/Edition XS/Edition XS - Rtings-AutoEQ - Target - Consolidated - 10 band.xml").exists())
 
     def test_shared_output_targets_are_validated_independently(self):
         entries = [
@@ -187,6 +216,7 @@ class ConverterTests(unittest.TestCase):
             self.assertEqual(manifest["preset_count"], 1)
             self.assertEqual(manifest["coverage"][0]["mode"], "partial")
             self.assertEqual(manifest["coverage"][0]["unmatched_profiles"], ["test:model::blue"])
+            self.assertEqual(manifest["presets"][0]["preset_name"], "Model Red - A - red")
 
     def test_overlapping_variant_routes_fail(self):
         entries = [
