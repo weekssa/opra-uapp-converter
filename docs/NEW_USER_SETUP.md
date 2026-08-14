@@ -58,7 +58,7 @@ GitHub documentation:
 4. When GitHub asks which repositories ChatGPT can access, include your fork: `YOUR_GITHUB_USERNAME/opra-uapp-converter`.
 5. If GitHub is already connected, open the GitHub app in **Settings → Apps** and use **Choose repositories** or **Configure Repositories on GitHub** to add your fork.
 
-GitHub app capabilities can vary by ChatGPT plan/workspace. If repository write actions are available, authorize the fork so ChatGPT can maintain `config/targets.json` and related project files for you. If your ChatGPT environment only provides read access, you can still use the GitHub web editor for the small config changes described in `docs/ADDING_HEADPHONES.md`.
+GitHub app capabilities can vary by ChatGPT plan/workspace. If repository write actions are available, authorize the fork so ChatGPT can maintain `config/targets.json` and related files for you. If your ChatGPT environment only provides read access, you can still use the GitHub web editor for the config changes described in `docs/ADDING_HEADPHONES.md`.
 
 OpenAI documentation:
 
@@ -96,6 +96,8 @@ The converter's managed paths are created underneath this root, for example:
 
 `OPRA UAPP Presets / Sennheiser / HD650`
 
+A model folder may contain presets directly and also contain variant subfolders. That is intentional. For example, the upstream configuration contains an unclassified EW300 measurement directly in `SIMGOT/EW300` plus Gold, Silver, and DSP child folders.
+
 ## 6. Create a ChatGPT Project for your fork
 
 Create a ChatGPT Project for this preset library and copy the instructions from:
@@ -110,7 +112,7 @@ Keep the Drive root as:
 
 `OPRA UAPP Presets`
 
-Then test the setup with a simple request such as:
+Then test the setup with:
 
 `What headphones do I have configured?`
 
@@ -122,7 +124,28 @@ Then test Drive access with:
 
 ChatGPT should compare your fork's current manifest/output with **your** `OPRA UAPP Presets` folder.
 
-## 7. Customize the headphones in your fork
+## 7. Understand the completeness safeguard before customizing
+
+The project deliberately defaults to **bringing over every usable OPRA parametric EQ profile** for a configured logical product.
+
+This includes checking formatting-only OPRA product aliases. For example, if OPRA stores `Model X` and `Model-X` as separate records but their normalized names collide, the converter audits profiles across both records instead of trusting only the first one found.
+
+The build fails when a complete product has a profile that is not routed anywhere or when one profile is routed into multiple folders. This is intentional.
+
+A red coverage error usually means one of these things:
+
+- OPRA added a new profile;
+- a formatting-only alias contains additional profiles;
+- a new/changed variant does not fit the current folder rules;
+- a broad rule overlaps another variant rule.
+
+Do not bypass the error automatically. Inspect the profile first.
+
+If the intended folder is obvious from OPRA metadata, update the config. If the profile is ambiguous, ChatGPT should ask you what you want before assigning a folder.
+
+Only use `allow_partial: true` when you explicitly want a subset. For example, if you say "add only the red variant," a partial configuration is appropriate. It should not be used merely to hide missing profiles.
+
+## 8. Customize the headphones in your fork
 
 The fork initially contains the upstream project's configured headphones. Remove any you do not want and add your own.
 
@@ -130,11 +153,27 @@ The easiest request is:
 
 `Add the FiiO FT1 to my presets`
 
-For normal additions, ChatGPT should edit only `config/targets.json`, verify the GitHub Action, and then mirror the new XML files into your Drive.
+For a normal addition, ChatGPT should:
 
-See `docs/ADDING_HEADPHONES.md` for the manual fallback.
+1. inspect OPRA and formatting-only aliases;
+2. inventory every usable parametric EQ;
+3. classify identifiable variants;
+4. ask you only when a profile cannot be classified safely;
+5. update `config/targets.json`;
+6. verify a green GitHub build with complete coverage;
+7. mirror the resulting XML files and root manifest into your Drive.
 
-## 8. Optional recurring Drive sync
+See `docs/ADDING_HEADPHONES.md` for config details including `include_terms`, exact `include_eq_ids`, and intentional `allow_partial` subsets.
+
+## 9. What happens when OPRA changes later
+
+The scheduled GitHub build re-runs coverage validation against the current OPRA feed.
+
+If OPRA adds a profile that your existing complete routing does not cover, the build turns red instead of silently dropping it or guessing a folder. When you ask ChatGPT to check the failure, it should inspect the new profile and either update an unambiguous rule or ask you for a classification choice.
+
+This is a safety feature. It keeps your library complete without inventing metadata.
+
+## 10. Optional recurring Drive sync
 
 The GitHub Action updates the generated GitHub output automatically. Google Drive mirroring is a separate ChatGPT-connected workflow because the repository intentionally stores **no Google credentials**.
 
@@ -142,9 +181,11 @@ If your ChatGPT environment supports scheduled tasks with connected apps, create
 
 1. checks that the latest `Update OPRA presets` workflow on your fork succeeded;
 2. reads `config/targets.json` and `output/manifest.json` from your fork;
-3. compares those managed files with your private `OPRA UAPP Presets` folder;
-4. mirrors only the required additions/updates/removals inside configured managed folders;
-5. does nothing when Drive is already current.
+3. confirms complete products have no unmatched profiles/errors;
+4. compares the managed files with your private `OPRA UAPP Presets` folder;
+5. mirrors only the required additions/updates/removals at the correct managed folder level;
+6. updates the Drive root `manifest.json`;
+7. does nothing when Drive is already current.
 
 The recurring task is only a safety net. When you add a headphone interactively, ChatGPT should sync the affected Drive files immediately when write actions are available.
 
@@ -155,3 +196,4 @@ The recurring task is only a safety net. When you add a headphone interactively,
 - Making or using a public fork does **not** make your Drive public.
 - Do not commit Google credentials, OAuth tokens, service-account files, or private Drive links/IDs to GitHub.
 - Each user connects ChatGPT separately to their own GitHub account/fork and their own Google account/Drive.
+- Profile/folder ambiguity should be resolved through explicit config/user choices, never through credentials or hidden external state.
