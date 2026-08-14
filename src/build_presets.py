@@ -91,7 +91,10 @@ def index_database(entries: Iterable[dict[str, Any]]) -> tuple[dict[str, Any], d
     return vendors, products, eqs
 
 
-def clean_filename(value: str) -> str:
+def uapp_safe_name(value: str) -> str:
+    """Return a ToneBoosters/UAPP-safe name for ISO-8859-1 XML."""
+    value = value.replace("•", "-")
+    value = value.encode("iso-8859-1", errors="replace").decode("iso-8859-1")
     value = re.sub(r"[\\/:*?\"<>|]", "-", value)
     value = re.sub(r"\s+", " ", value).strip(" .")
     return value or "Preset"
@@ -173,7 +176,7 @@ def target_matches(target: Target, product: dict[str, Any], eq_id: str, eq: dict
 def preset_display_name(eq: dict[str, Any]) -> str:
     author = str(eq.get("author", "Unknown"))
     details = str(eq.get("details", "")).strip()
-    return clean_filename(f"{author} - {details}" if details else author)
+    return uapp_safe_name(f"{author} - {details}" if details else author)
 
 
 def write_presets(source: str, config_path: Path, output_root: Path) -> dict[str, Any]:
