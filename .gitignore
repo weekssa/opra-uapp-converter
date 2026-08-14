@@ -2,3 +2,13 @@
 __pycache__/
 *.pyc
 .venv/
+
+# Local credentials and environment files must never be committed.
+.env
+.env.*
+credentials.json
+client_secret*.json
+service-account*.json
+token.json
+*.pem
+*.key
