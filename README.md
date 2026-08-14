@@ -169,16 +169,20 @@ You normally do not need to run this locally. GitHub Actions handles it automati
 - `docs/CHATGPT_PROJECT_INSTRUCTIONS.md` — reusable instructions for a ChatGPT Project.
 - `docs/NEW_USER_SETUP.md` — setup guide for a user's own fork and private Google Drive.
 - `docs/AUTOMATION.md` — GitHub → OPRA → Drive automation architecture.
+- `LICENSE` — Apache License 2.0 for the converter software/documentation.
+- `NOTICE` — third-party software provenance/attribution.
 - `DATA_LICENSE.md` — licensing/attribution rules for OPRA-derived output.
 
 ## Attribution and licenses
 
-The original converter software and project documentation are licensed under the **MIT License**. See [`LICENSE`](LICENSE).
+The converter software and project documentation are distributed under the **Apache License, Version 2.0**. See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).
 
-OPRA manufacturer, product, and EQ data is licensed by the OPRA project under **CC BY-SA 4.0**. The OPRA-derived portions of generated files under `output/` are therefore not relicensed as MIT. Creator attribution, source links, and OPRA identifiers are preserved in `output/manifest.json`.
+The ToneBoosters/UAPP normalization and XML mapping is based in part on `SiliconExarch/EqConverter`, which is Apache-2.0 licensed. This repository substantially rewrites and extends that work for OPRA ingestion, validation, additional supported filter types, deterministic generation, attribution metadata, documentation, and Drive-oriented maintenance.
 
-See [`DATA_LICENSE.md`](DATA_LICENSE.md) for the licensing boundary and attribution details.
+OPRA manufacturer, product, and EQ data is licensed by the OPRA project under **CC BY-SA 4.0**. The OPRA-derived portions of generated files under `output/` are therefore not covered by the repository's Apache-2.0 software license. Creator attribution, source links, and OPRA identifiers are preserved in `output/manifest.json`.
 
-## ToneBoosters format references
+See [`DATA_LICENSE.md`](DATA_LICENSE.md) for the software/data licensing boundary and attribution details.
 
-The ToneBoosters/UAPP XML mapping is an independent implementation informed by publicly available compatibility information and community converters, including `KassMiw/PEQ2UAPP` and `SiliconExarch/EqConverter`. Referencing those projects does not place their source code in this repository.
+## ToneBoosters format provenance
+
+The original normalization/XML serialization reference used by this converter is `SiliconExarch/EqConverter` (Apache-2.0). Other publicly available community converters may be used only as compatibility cross-checks; their source is not redistributed here unless explicitly identified and licensed.
