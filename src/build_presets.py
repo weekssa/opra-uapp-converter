@@ -44,12 +44,15 @@ DISABLED_FILTER = {
     "type": TB_FILTER_TYPES["peak_dip"],
 }
 
+
 @dataclass(frozen=True)
 class Target:
     vendor_id: str
     product_name: str
     output_path: str
     include_terms: tuple[str, ...] = ()
+    include_eq_ids: tuple[str, ...] = ()
+    allow_partial: bool = False
 
 
 def load_config(path: Path) -> list[Target]:
@@ -61,6 +64,8 @@ def load_config(path: Path) -> list[Target]:
             product_name=item["product_name"],
             output_path=item["output_path"],
             include_terms=tuple(t.casefold() for t in item.get("include_terms", [])),
+            include_eq_ids=tuple(str(eq_id).casefold() for eq_id in item.get("include_eq_ids", [])),
+            allow_partial=bool(item.get("allow_partial", False)),
         ))
     return targets
 
@@ -169,10 +174,32 @@ def build_xml(preset_name: str, gain_db: float, bands: list[dict[str, Any]]) -> 
     return xml, warnings
 
 
+def logical_product_name(value: str) -> str:
+    """Normalize formatting-only product-name differences for coverage checks."""
+    return "".join(char for char in value.casefold() if char.isalnum())
+
+
+def logical_product_key(vendor_id: str, product_name: str) -> tuple[str, str]:
+    return vendor_id.casefold(), logical_product_name(product_name)
+
+
+def eq_fingerprint(eq: dict[str, Any]) -> str:
+    """Fingerprint EQ semantics while ignoring source-link/provenance differences."""
+    payload = {
+        "author": str(eq.get("author", "")).casefold(),
+        "details": str(eq.get("details", "")).casefold(),
+        "type": eq.get("type"),
+        "parameters": eq.get("parameters", {}),
+    }
+    return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+
+
 def target_matches(target: Target, product: dict[str, Any], eq_id: str, eq: dict[str, Any]) -> bool:
     if product.get("vendor_id") != target.vendor_id:
         return False
     if product.get("name", "").casefold() != target.product_name.casefold():
+        return False
+    if target.include_eq_ids and eq_id.casefold() not in target.include_eq_ids:
         return False
     if not target.include_terms:
         return True
@@ -186,12 +213,78 @@ def preset_display_name(eq: dict[str, Any]) -> str:
     return uapp_safe_name(f"{author} - {details}" if details else author)
 
 
+def build_coverage_report(
+    targets: list[Target],
+    products: dict[str, Any],
+    eqs: list[dict[str, Any]],
+    candidates: list[tuple[Target, str, dict[str, Any], str, dict[str, Any]]],
+) -> tuple[list[dict[str, Any]], list[str]]:
+    """Ensure configured logical products do not silently omit OPRA parametric EQs."""
+    groups: dict[tuple[str, str], list[Target]] = {}
+    for target in targets:
+        groups.setdefault(logical_product_key(target.vendor_id, target.product_name), []).append(target)
+
+    matched_by_group: dict[tuple[str, str], dict[str, dict[str, Any]]] = {key: {} for key in groups}
+    for target, eq_id, eq, _, product in candidates:
+        key = logical_product_key(target.vendor_id, product.get("name", target.product_name))
+        if key in matched_by_group:
+            matched_by_group[key][eq_id] = eq
+
+    report: list[dict[str, Any]] = []
+    errors: list[str] = []
+    for key, group_targets in sorted(groups.items()):
+        vendor_id, normalized_name = key
+        partial = any(target.allow_partial for target in group_targets)
+        product_ids = {
+            product_id
+            for product_id, product in products.items()
+            if product.get("vendor_id", "").casefold() == vendor_id
+            and logical_product_name(str(product.get("name", ""))) == normalized_name
+        }
+        group_eqs = [
+            entry for entry in eqs
+            if entry["data"].get("type") == "parametric_eq"
+            and entry["data"].get("product_id") in product_ids
+        ]
+        matched = matched_by_group.get(key, {})
+        matched_fingerprints = {eq_fingerprint(eq) for eq in matched.values()}
+        duplicate_covered: list[str] = []
+        unmatched: list[str] = []
+        for entry in group_eqs:
+            eq_id = entry["id"]
+            if eq_id in matched:
+                continue
+            if eq_fingerprint(entry["data"]) in matched_fingerprints:
+                duplicate_covered.append(eq_id)
+            else:
+                unmatched.append(eq_id)
+
+        display_names = sorted({str(products[product_id].get("name", "")) for product_id in product_ids})
+        report.append({
+            "vendor_id": group_targets[0].vendor_id,
+            "logical_product": " / ".join(display_names) or group_targets[0].product_name,
+            "mode": "partial" if partial else "complete",
+            "opra_parametric_profiles": len(group_eqs),
+            "matched_profiles": len(matched),
+            "duplicate_profiles_covered": len(duplicate_covered),
+            "unmatched_profiles": unmatched,
+        })
+        if unmatched and not partial:
+            errors.append(
+                f"Unmatched OPRA parametric EQ profiles for {group_targets[0].vendor_id} / "
+                f"{' / '.join(display_names) or group_targets[0].product_name}: {', '.join(unmatched)}. "
+                "Classify them with config targets, or set allow_partial=true only when the user explicitly wants a subset."
+            )
+    return report, errors
+
+
 def write_presets(source: str, config_path: Path, output_root: Path) -> dict[str, Any]:
     targets = load_config(config_path)
     vendors, products, eqs = index_database(read_jsonl(source))
 
     candidates: list[tuple[Target, str, dict[str, Any], str, dict[str, Any]]] = []
     matched_counts = [0 for _ in targets]
+    routing_errors: list[str] = []
     for eq_entry in eqs:
         eq_id = eq_entry["id"]
         eq = eq_entry["data"]
@@ -201,10 +294,20 @@ def write_presets(source: str, config_path: Path, output_root: Path) -> dict[str
         product = products.get(product_id)
         if not product:
             continue
+        matching_indices: list[int] = []
         for target_index, target in enumerate(targets):
             if target_matches(target, product, eq_id, eq):
+                matching_indices.append(target_index)
                 matched_counts[target_index] += 1
                 candidates.append((target, eq_id, eq, product_id, product))
+        output_paths = {targets[index].output_path for index in matching_indices}
+        if len(output_paths) > 1:
+            routing_errors.append(
+                f"OPRA EQ {eq_id} matches multiple output folders: {', '.join(sorted(output_paths))}. "
+                "Make the variant rules mutually exclusive instead of duplicating one profile across folders."
+            )
+
+    coverage, coverage_errors = build_coverage_report(targets, products, eqs, candidates)
 
     if output_root.exists():
         shutil.rmtree(output_root)
@@ -213,7 +316,7 @@ def write_presets(source: str, config_path: Path, output_root: Path) -> dict[str
     name_counts = Counter((target.output_path, preset_display_name(eq)) for target, _, eq, _, _ in candidates)
     used_paths: set[str] = set()
     manifest_entries: list[dict[str, Any]] = []
-    errors: list[str] = []
+    errors: list[str] = list(routing_errors) + list(coverage_errors)
 
     for target, eq_id, eq, product_id, product in candidates:
         try:
@@ -264,6 +367,7 @@ def write_presets(source: str, config_path: Path, output_root: Path) -> dict[str
         "opra_attribution": "EQ data from the OPRA project (CC BY-SA 4.0). Preset creators are credited per file in this manifest.",
         "preset_count": len(manifest_entries),
         "presets": sorted(manifest_entries, key=lambda item: item["file"].casefold()),
+        "coverage": coverage,
         "errors": errors,
     }
     (output_root / "manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
@@ -285,6 +389,7 @@ def main() -> int:
         return 1
     print(f"Generated {manifest['preset_count']} UAPP/ToneBoosters presets in {args.output}")
     return 0
+
 
 if __name__ == "__main__":
     raise SystemExit(main())
