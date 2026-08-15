@@ -68,8 +68,9 @@ After config changes:
 1. verify `Update OPRA presets` succeeds;
 2. confirm `src/update_docs.py` regenerated README supported-headphones/project-description content and `docs/PROJECT_DESCRIPTION.md`;
 3. inspect `output/manifest.json`: expected profiles, attribution/source, `preset_name`, coverage, exclusions, duplicates, warnings, and no errors;
-4. never weaken validation just to get green;
-5. if Drive write actions exist, immediately sync generated XMLs/root manifest to `OPRA UAPP Presets`, creating folders and removing obsolete generated filenames safely.
+4. confirm the automatic `VERSION` bump matches the change and that the matching `vX.Y.Z` Git tag/GitHub Release exists with the preset ZIP, SHA-256 checksum, and manifest assets;
+5. never weaken validation just to get green;
+6. if Drive write actions exist, immediately sync generated XMLs/root manifest to `OPRA UAPP Presets`, creating folders and removing obsolete generated filenames safely.
 
 ## Converter safety
 Preserve OPRA preamp, frequency, gain, Q, band priority, author, details, and source attribution. Do not manually edit generated XML as the normal solution. Do not silently ignore unsupported filters. Output is limited to 10 bands: preserve OPRA priority order, take the first 10, and retain the warning. Keep 5/10-band versions separate. Keep output deterministic and ISO-8859-1-safe while preserving full UTF-8 OPRA metadata in the manifest.

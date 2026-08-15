@@ -7,6 +7,7 @@ on:
   push:
     branches: [main]
     paths:
+      - "VERSION"
       - "src/**"
       - "config/**"
       - "tests/**"
@@ -91,7 +92,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add VERSION output README.md docs/PROJECT_DESCRIPTION.md docs/AUTOMATION.md
+          git add VERSION output README.md docs/PROJECT_DESCRIPTION.md docs/AUTOMATION.md docs/ADDING_HEADPHONES.md
           if git diff --cached --quiet; then
             echo "No OPRA preset, version, or documentation changes detected."
           else
@@ -107,3 +108,57 @@ jobs:
             git commit -m "$message"
             git push
           fi
+
+      - name: Publish version tag and GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          bump="${{ steps.version.outputs.bump }}"
+          tag="v${version}"
+          archive="opra-uapp-presets-${tag}.zip"
+          checksum="${archive}.sha256"
+
+          git fetch --tags origin
+
+          if git rev-parse "$tag" >/dev/null 2>&1; then
+            tagged_sha="$(git rev-list -n 1 "$tag")"
+            head_sha="$(git rev-parse HEAD)"
+            if [[ "$bump" != "none" && "$tagged_sha" != "$head_sha" ]]; then
+              echo "Existing tag $tag points to $tagged_sha instead of release commit $head_sha." >&2
+              exit 1
+            fi
+            echo "Tag $tag already exists."
+          else
+            git tag -a "$tag" -m "Release $tag"
+            git push origin "$tag"
+          fi
+
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "GitHub Release $tag already exists."
+            exit 0
+          fi
+
+          export archive
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          from zipfile import ZIP_DEFLATED, ZipFile
+
+          root = Path("output")
+          archive = Path(os.environ["archive"])
+          with ZipFile(archive, "w", compression=ZIP_DEFLATED) as bundle:
+              for path in sorted(root.rglob("*")):
+                  if path.is_file():
+                      bundle.write(path, path.relative_to(root).as_posix())
+          PY
+
+          sha256sum "$archive" > "$checksum"
+          gh release create "$tag" \
+            "$archive#UAPP preset bundle ($tag)" \
+            "$checksum#SHA-256 checksum" \
+            "output/manifest.json#Preset manifest" \
+            --verify-tag \
+            --title "$tag" \
+            --generate-notes
