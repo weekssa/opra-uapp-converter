@@ -223,7 +223,7 @@ permissions:
 That is the repository permission required for the workflow to commit regenerated presets/documentation back to the fork. The project does not require a Google credential, GitHub personal access token, or other external secret in GitHub Actions.
 
 <!-- VERSIONING_START -->
-## Automatic project versioning
+## Automatic project versioning and releases
 
 The tracked [`VERSION`](../VERSION) file currently contains **1.0.0** and follows Semantic Versioning (`MAJOR.MINOR.PATCH`).
 
@@ -234,7 +234,16 @@ The `Update OPRA presets` workflow decides the bump only after a successful pres
 - **Major** — intentionally changed by a maintainer for a breaking converter or preset-format change. Major versions are never guessed automatically.
 - **No bump** — no configured-target change and no generated-output change. Daily scheduled checks therefore do not create version noise.
 
-After deciding the version, the workflow regenerates the README and `docs/PROJECT_DESCRIPTION.md`, runs the test suite, and commits `VERSION`, generated output, and generated documentation together when anything changed.
+After deciding the version, the workflow regenerates the README, `docs/PROJECT_DESCRIPTION.md`, this automation document, and the relevant adding-headphones guidance; runs the test suite; and commits `VERSION`, generated output, and generated documentation together when anything changed.
+
+After that commit is safely on `main`, the workflow ensures a matching annotated Git tag (`vMAJOR.MINOR.PATCH`) exists and creates the matching GitHub Release if it is missing. Each release contains:
+
+- GitHub-generated release notes;
+- `opra-uapp-presets-vMAJOR.MINOR.PATCH.zip`, containing the complete generated preset library with `manifest.json` at the archive root;
+- a `.sha256` checksum file for the ZIP;
+- the matching `output/manifest.json` as a separate release asset.
+
+The release step is idempotent: if the current version's tag and GitHub Release already exist, a no-change scheduled run does not create a duplicate release. This also lets the workflow backfill a missing release for the current `VERSION` without inventing a new version number.
 
 This design deliberately uses the normal short-lived GitHub Actions `GITHUB_TOKEN` with `contents: write`. It does **not** store an Administration-level personal access token merely to keep GitHub's cosmetic About/Description field synchronized. The repository About text may remain a stable summary while the README and generated project description carry the current version and complete configured-headphone information.
 <!-- VERSIONING_END -->
