@@ -2,6 +2,32 @@
 
 Automatically converts selected [OPRA](https://github.com/opra-project/OPRA) parametric EQ profiles into 10-band ToneBoosters XML presets that can be imported into USB Audio Player PRO (UAPP), then mirrors the managed preset library to Google Drive.
 
+## Choose how you want to use this project
+
+### I only want the presets that are already published
+
+**No fork is required. You do not need ChatGPT or Google Drive.**
+
+Open this repository's **Releases** page, download the newest `opra-uapp-presets-vX.Y.Z.zip`, extract it, and use the XML preset for your headphone in UAPP.
+
+This is the simplest option when the headphone you want is already included below.
+
+### I want my own headphones and automatic updates
+
+**Fork the repository first.** Your fork becomes your personal source of truth for configured headphones, generated XML presets, version history, tags, and releases.
+
+Then connect ChatGPT to **your fork** and **your own Google Drive**. Your Drive can remain private and is never stored in GitHub.
+
+For a beginner-friendly setup you can follow and copy/paste directly:
+
+**[`docs/COPY_PASTE_SETUP.md`](docs/COPY_PASTE_SETUP.md) — start here for your own library**
+
+For the longer reference/troubleshooting guide:
+
+[`docs/NEW_USER_SETUP.md`](docs/NEW_USER_SETUP.md)
+
+You do **not** need Python, Terminal, a GitHub personal access token, or Google credentials stored in GitHub for the normal setup.
+
 ## Project description
 
 <!-- PROJECT_DESCRIPTION_START -->
@@ -23,26 +49,6 @@ The description above is generated from `config/targets.json` and `VERSION`. The
 <!-- SUPPORTED_HEADPHONES_END -->
 
 This list is generated automatically from `config/targets.json`, so adding or removing a target updates the documentation on the next GitHub build.
-
-## Use your own fork and private Drive
-
-This project is designed so another user can fork the repository, connect ChatGPT to **their own fork** and **their own Google Drive**, and maintain a completely independent preset library.
-
-The Google Drive folder does **not** need to be public or shared with GitHub. No Google credentials are stored in this repository.
-
-Start here:
-
-[`docs/NEW_USER_SETUP.md`](docs/NEW_USER_SETUP.md)
-
-That guide covers:
-
-1. forking the public repository;
-2. enabling GitHub Actions in the fork;
-3. authorizing ChatGPT to access the user's fork;
-4. connecting the user's own Google Drive with the required Drive actions;
-5. creating a private `OPRA UAPP Presets` Drive folder;
-6. configuring a ChatGPT Project for the fork;
-7. optionally setting up recurring Drive synchronization.
 
 # The easy way to add a headphone
 
@@ -318,9 +324,10 @@ You normally do not need to run this locally. GitHub Actions handles it automati
 - `src/update_version.py` — validates and applies major/minor/patch version bumps.
 - `output/manifest.json` — source of truth for generated preset filenames/names, OPRA metadata, exclusions, and coverage status.
 - `docs/PROJECT_DESCRIPTION.md` — generated project-description text reflecting current configured headphones.
+- `docs/COPY_PASTE_SETUP.md` — copy/paste beginner walkthrough for existing releases or a personalized fork + Drive library.
 - `docs/ADDING_HEADPHONES.md` — beginner-friendly manual addition, approval, naming, and routing guide.
 - `docs/CHATGPT_PROJECT_INSTRUCTIONS.md` — reusable instructions for a ChatGPT Project.
-- `docs/NEW_USER_SETUP.md` — setup guide for a user's own fork and private Google Drive.
+- `docs/NEW_USER_SETUP.md` — detailed setup/troubleshooting guide for a user's own fork and private Google Drive.
 - `docs/AUTOMATION.md` — GitHub → OPRA → Drive automation architecture.
 - `LICENSE` — Apache License 2.0 for the converter software/documentation.
 - `NOTICE` — third-party software provenance/attribution.
