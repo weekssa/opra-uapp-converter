@@ -25,20 +25,58 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
+      - name: Detect configured-headphone changes
+        id: config
+        shell: bash
+        run: |
+          changed=false
+          if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+            before="${{ github.event.before }}"
+            zero="0000000000000000000000000000000000000000"
+            if [[ -n "$before" && "$before" != "$zero" ]]; then
+              if ! git diff --quiet "$before" "$GITHUB_SHA" -- config/targets.json; then
+                changed=true
+              fi
+            fi
+          fi
+          echo "changed=$changed" >> "$GITHUB_OUTPUT"
+
+      - name: Generate presets from OPRA
+        run: python src/build_presets.py
+
+      - name: Determine and apply version bump
+        id: version
+        shell: bash
+        run: |
+          bump=none
+          if [[ "${{ steps.config.outputs.changed }}" == "true" ]]; then
+            bump=minor
+          elif [[ -n "$(git status --porcelain -- output)" ]]; then
+            bump=patch
+          fi
+
+          if [[ "$bump" != "none" ]]; then
+            python src/update_version.py --bump "$bump"
+          fi
+
+          version="$(tr -d '[:space:]' < VERSION)"
+          echo "bump=$bump" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Version decision: $bump -> v$version"
+
       - name: Update generated documentation
         run: python src/update_docs.py
 
       - name: Run tests
         run: python -m unittest discover -s tests -v
-
-      - name: Generate presets from OPRA
-        run: python src/build_presets.py
 
       - name: Upload generated presets artifact
         uses: actions/upload-artifact@v4
@@ -48,14 +86,24 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-      - name: Commit updated presets and documentation
+      - name: Commit updated presets, version, and documentation
+        shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add output README.md docs/PROJECT_DESCRIPTION.md
+          git add VERSION output README.md docs/PROJECT_DESCRIPTION.md docs/AUTOMATION.md
           if git diff --cached --quiet; then
-            echo "No OPRA preset or documentation changes detected."
+            echo "No OPRA preset, version, or documentation changes detected."
           else
-            git commit -m "Update OPRA presets and documentation"
+            version="${{ steps.version.outputs.version }}"
+            bump="${{ steps.version.outputs.bump }}"
+            if [[ "$bump" == "minor" ]]; then
+              message="Release v${version}: update configured presets and documentation"
+            elif [[ "$bump" == "patch" ]]; then
+              message="Release v${version}: update OPRA presets and documentation"
+            else
+              message="Update generated project documentation"
+            fi
+            git commit -m "$message"
             git push
           fi
