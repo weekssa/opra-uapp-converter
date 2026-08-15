@@ -222,6 +222,23 @@ permissions:
 
 That is the repository permission required for the workflow to commit regenerated presets/documentation back to the fork. The project does not require a Google credential, GitHub personal access token, or other external secret in GitHub Actions.
 
+<!-- VERSIONING_START -->
+## Automatic project versioning
+
+The tracked [`VERSION`](../VERSION) file currently contains **1.0.0** and follows Semantic Versioning (`MAJOR.MINOR.PATCH`).
+
+The `Update OPRA presets` workflow decides the bump only after a successful preset generation:
+
+- **Minor** — `config/targets.json` changed in the triggering push. This represents a change to the managed headphone/variant set or its approved routing/selection configuration.
+- **Patch** — the generated `output/` changed while the configured target file did not. This covers upstream OPRA changes that alter the managed preset library and converter changes that materially alter generated output.
+- **Major** — intentionally changed by a maintainer for a breaking converter or preset-format change. Major versions are never guessed automatically.
+- **No bump** — no configured-target change and no generated-output change. Daily scheduled checks therefore do not create version noise.
+
+After deciding the version, the workflow regenerates the README and `docs/PROJECT_DESCRIPTION.md`, runs the test suite, and commits `VERSION`, generated output, and generated documentation together when anything changed.
+
+This design deliberately uses the normal short-lived GitHub Actions `GITHUB_TOKEN` with `contents: write`. It does **not** store an Administration-level personal access token merely to keep GitHub's cosmetic About/Description field synchronized. The repository About text may remain a stable summary while the README and generated project description carry the current version and complete configured-headphone information.
+<!-- VERSIONING_END -->
+
 ## 2. GitHub output → Google Drive
 
 Google Drive mirroring is deliberately **not** performed by GitHub Actions.
