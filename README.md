@@ -8,7 +8,7 @@ Automatically converts selected [OPRA](https://github.com/opra-project/OPRA) par
 OPRA → UAPP/ToneBoosters EQ converter v1.0.0 with automatic Google Drive sync. Configured: HIFIMAN Edition XS; SIMGOT EW300; SIMGOT EW300 Gold; SIMGOT EW300 Silver; SIMGOT EW300 DSP; Sennheiser HD650; Sony WF-1000XM5
 <!-- PROJECT_DESCRIPTION_END -->
 
-The description above is generated from `config/targets.json`. The same generated text is also saved in [`docs/PROJECT_DESCRIPTION.md`](docs/PROJECT_DESCRIPTION.md) for easy copy/paste into repository or project metadata.
+The description above is generated from `config/targets.json` and `VERSION`. The same generated text is also saved in [`docs/PROJECT_DESCRIPTION.md`](docs/PROJECT_DESCRIPTION.md) for easy copy/paste into repository or project metadata.
 
 ## Included headphones
 
@@ -281,7 +281,7 @@ The version, supported-headphone list, and project description are regenerated b
 
 `.github/workflows/update-presets.yml` runs every day at 09:17 UTC and can also be started manually from the Actions tab. It also runs automatically when converter/config/test files change.
 
-On every run, `src/update_docs.py` regenerates the supported-headphones list in this README and `docs/PROJECT_DESCRIPTION.md` from `config/targets.json`. This keeps the documentation aligned even when you add a headphone manually.
+On every run, `src/update_docs.py` regenerates the supported-headphones list in this README and `docs/PROJECT_DESCRIPTION.md` from `config/targets.json` and `VERSION`. This keeps the documentation aligned even when you add a headphone manually.
 
 The converter's coverage checks run against the current OPRA feed on every build. A newly added OPRA profile that is not covered by the existing routing rules causes a visible build failure instead of silently disappearing or being guessed into the wrong variant folder.
 
@@ -309,9 +309,11 @@ You normally do not need to run this locally. GitHub Actions handles it automati
 
 ## Important files
 
+- `VERSION` — canonical Semantic Versioning value for the managed preset library.
 - `config/targets.json` — the headphones/variants being managed and their explicit routing/selection rules.
 - `src/build_presets.py` — converter, UAPP-visible naming, exact-ID selection/exclusion, and profile-coverage validation logic.
-- `src/update_docs.py` — automatically updates supported-headphone documentation from the config.
+- `src/update_docs.py` — automatically updates supported-headphone/version documentation from the config and `VERSION`.
+- `src/update_version.py` — validates and applies major/minor/patch version bumps.
 - `output/manifest.json` — source of truth for generated preset filenames/names, OPRA metadata, exclusions, and coverage status.
 - `docs/PROJECT_DESCRIPTION.md` — generated project-description text reflecting current configured headphones.
 - `docs/ADDING_HEADPHONES.md` — beginner-friendly manual addition, approval, naming, and routing guide.
