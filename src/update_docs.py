@@ -129,12 +129,37 @@ After deciding the version, the workflow regenerates the README and `docs/PROJEC
 This design deliberately uses the normal short-lived GitHub Actions `GITHUB_TOKEN` with `contents: write`. It does **not** store an Administration-level personal access token merely to keep GitHub's cosmetic About/Description field synchronized. The repository About text may remain a stable summary while the README and generated project description carry the current version and complete configured-headphone information."""
 
 
+def update_readme_static_versioning_text(readme: str) -> str:
+    readme = readme.replace(
+        "The description above is generated from `config/targets.json`.",
+        "The description above is generated from `config/targets.json` and `VERSION`.",
+    )
+    readme = readme.replace(
+        "On every run, `src/update_docs.py` regenerates the supported-headphones list in this README and `docs/PROJECT_DESCRIPTION.md` from `config/targets.json`.",
+        "On every run, `src/update_docs.py` regenerates the supported-headphones list in this README and `docs/PROJECT_DESCRIPTION.md` from `config/targets.json` and `VERSION`.",
+    )
+    if "- `VERSION` —" not in readme:
+        readme = readme.replace(
+            "## Important files\n\n- `config/targets.json`",
+            "## Important files\n\n- `VERSION` — canonical Semantic Versioning value for the managed preset library.\n- `config/targets.json`",
+            1,
+        )
+    if "- `src/update_version.py` —" not in readme:
+        readme = readme.replace(
+            "- `src/update_docs.py` — automatically updates supported-headphone documentation from the config.",
+            "- `src/update_docs.py` — automatically updates supported-headphone/version documentation from the config and `VERSION`.\n- `src/update_version.py` — validates and applies major/minor/patch version bumps.",
+            1,
+        )
+    return readme
+
+
 def main() -> None:
     names = load_target_names()
     version = load_version()
     description = build_description(names, version)
 
     readme = README.read_text(encoding="utf-8")
+    readme = update_readme_static_versioning_text(readme)
     headphone_list = "\n".join(f"- {name}" for name in names) if names else "- None configured"
     readme = replace_generated_section(readme, HEADPHONES_START, HEADPHONES_END, headphone_list)
     readme = replace_generated_section(readme, DESCRIPTION_START, DESCRIPTION_END, description)
