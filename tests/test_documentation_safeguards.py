@@ -62,6 +62,28 @@ class DocumentationSafeguardTests(unittest.TestCase):
                 self.assertIn("eq/", text)
                 self.assertIn("GitHub search", text)
 
+    def test_public_onboarding_distinguishes_download_and_fork_paths(self):
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        for phrase in [
+            "No fork is required",
+            "Fork the repository first",
+            "docs/COPY_PASTE_SETUP.md",
+        ]:
+            with self.subTest(document="README.md", phrase=phrase):
+                self.assertIn(phrase, readme)
+
+        setup = (ROOT / "docs/COPY_PASTE_SETUP.md").read_text(encoding="utf-8")
+        for phrase in [
+            "Path A — I only want the presets that are already published",
+            "Path B — I want my own automatically maintained headphone library",
+            "YOUR_GITHUB_USERNAME/opra-uapp-converter",
+            "OPRA UAPP Presets",
+            "Set up and verify my OPRA UAPP preset project",
+            "Add the FiiO FT1 to my presets",
+        ]:
+            with self.subTest(document="COPY_PASTE_SETUP.md", phrase=phrase):
+                self.assertIn(phrase, setup)
+
 
 if __name__ == "__main__":
     unittest.main()
