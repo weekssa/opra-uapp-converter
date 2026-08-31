@@ -425,6 +425,8 @@ It will:
 8. publish a matching `vX.Y.Z` Git tag and GitHub Release with generated notes, a versioned preset ZIP, SHA-256 checksum, and manifest.
 7. apply the automatic Semantic Versioning rule: configured-headphone changes bump the minor version, while upstream OPRA output changes bump the patch version;
 8. publish a matching `vX.Y.Z` Git tag and GitHub Release with generated notes, a versioned preset ZIP, SHA-256 checksum, and manifest.
+7. apply the automatic Semantic Versioning rule: configured-headphone changes bump the minor version, while upstream OPRA output changes bump the patch version;
+8. publish a matching `vX.Y.Z` Git tag and GitHub Release with generated notes, a versioned preset ZIP, SHA-256 checksum, and manifest.
 
 A red coverage or exact-ID failure is a request to investigate the selection/routing, not permission to weaken validation.
 
